@@ -1,0 +1,69 @@
+{
+  "name": "whatsapp-linux",
+  "productName": "WhatsApp Linux",
+  "version": "1.0.0",
+  "description": "WhatsApp Web como app de desktop no Linux, com bandeja e fechar para segundo plano",
+  "homepage": "https://github.com/RafaTheMonk/whatsapp-linux",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RafaTheMonk/whatsapp-linux.git"
+  },
+  "license": "MIT",
+  "author": "Rafael Brito",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --linux AppImage deb tar.gz",
+    "dist:appimage": "electron-builder --linux AppImage"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.rafaelbrito.whatsapplinux",
+    "productName": "WhatsApp Linux",
+    "executableName": "whatsapp-linux",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "build/tray.png"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "tar.gz"
+      ],
+      "category": "Network;InstantMessaging",
+      "icon": "build/icon.png",
+      "maintainer": "Rafael Brito",
+      "synopsis": "WhatsApp Web como app de desktop",
+      "description": "Janela propria, icone na bandeja e fechar para segundo plano. Nao exige navegador nem dependencia instalada na maquina.",
+      "desktop": {
+        "entry": {
+          "Name": "WhatsApp Linux",
+          "GenericName": "Mensageiro",
+          "Keywords": "whatsapp;zap;mensagem;chat;",
+          "StartupWMClass": "whatsapp-linux",
+          "StartupNotify": "true"
+        }
+      }
+    },
+    "appImage": {
+      "artifactName": "WhatsAppLinux-${version}-${arch}.AppImage"
+    },
+    "deb": {
+      "artifactName": "whatsapp-linux_${version}_${arch}.deb",
+      "depends": [
+        "libnotify4",
+        "libxtst6",
+        "libnss3"
+      ]
+    }
+  }
+}
