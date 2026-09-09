@@ -10,10 +10,13 @@
 #   --modo auto   (padrao) usa tray se as dependencias existirem, senao leve.
 set -euo pipefail
 
+: "${HOME:?HOME nao definido}"
+
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 ICON_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor"
+CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/whatsapp-linux"
 
 MODO="auto"
 while [ $# -gt 0 ]; do
@@ -56,23 +59,34 @@ case "$MODO" in
     *) echo "modo invalido: $MODO (use leve, tray ou auto)" >&2; exit 1 ;;
 esac
 
-mkdir -p "$BIN_DIR" "$APP_DIR" "$ICON_DIR/scalable/apps"
+mkdir -p "$BIN_DIR" "$APP_DIR" "$ICON_DIR/scalable/apps" "$CONF_DIR"
 
 # 1. icone: SVG sempre, PNGs quando houver rasterizador
 install -m 644 "$REPO_DIR/src/whatsapp-web.svg" "$ICON_DIR/scalable/apps/whatsapp-web.svg"
+rasterizar() {  # $1 = tamanho, $2 = destino
+    case "$RASTER" in
+        rsvg-convert) rsvg-convert -w "$1" -h "$1" -o "$2" "$REPO_DIR/src/whatsapp-web.svg" ;;
+        # -density antes do input: o ImageMagick rasteriza o SVG no tamanho certo
+        # em vez de ampliar um bitmap pequeno e entregar icone borrado.
+        magick)  magick -background none -density 384 "$REPO_DIR/src/whatsapp-web.svg" -resize "${1}x${1}" "$2" ;;
+        convert) convert -background none -density 384 "$REPO_DIR/src/whatsapp-web.svg" -resize "${1}x${1}" "$2" ;;
+    esac
+}
 RASTER=""
-command -v rsvg-convert >/dev/null 2>&1 && RASTER=rsvg-convert
-[ -z "$RASTER" ] && command -v magick >/dev/null 2>&1 && RASTER=magick
+for r in rsvg-convert magick convert; do
+    command -v "$r" >/dev/null 2>&1 && { RASTER="$r"; break; }
+done
 if [ -n "$RASTER" ]; then
+    falhou=0
     for s in 16 22 24 32 48 64 128 256 512; do
         mkdir -p "$ICON_DIR/${s}x${s}/apps"
-        if [ "$RASTER" = "rsvg-convert" ]; then
-            rsvg-convert -w "$s" -h "$s" -o "$ICON_DIR/${s}x${s}/apps/whatsapp-web.png" "$REPO_DIR/src/whatsapp-web.svg"
-        else
-            magick -background none "$REPO_DIR/src/whatsapp-web.svg" -resize "${s}x${s}" "$ICON_DIR/${s}x${s}/apps/whatsapp-web.png"
-        fi
+        rasterizar "$s" "$ICON_DIR/${s}x${s}/apps/whatsapp-web.png" 2>/dev/null || falhou=1
     done
-    echo "icone     -> SVG + PNG 16..512"
+    if [ "$falhou" = 0 ]; then
+        echo "icone     -> SVG + PNG 16..512 ($RASTER)"
+    else
+        echo "icone     -> SVG ok, PNGs falharam com $RASTER (o SVG sozinho ja serve)"
+    fi
 else
     echo "icone     -> so SVG (instale librsvg ou imagemagick para gerar os PNGs)"
 fi
@@ -93,32 +107,56 @@ else
             if command -v "$b" >/dev/null 2>&1; then BROWSER="$b"; break; fi
         done
     fi
-    # O Chromium monta o app_id como <produto>-<host>__-<perfil>.
+    [ -n "$BROWSER" ] || { echo "erro: nenhum navegador Chromium encontrado. Use --modo tray ou instale o Brave/Chromium." >&2; exit 1; }
+
+    # Grava o navegador escolhido para o lancador usar o MESMO da instalacao.
+    # Sem isso, instalar com um e executar com outro faz o app_id divergir.
+    printf '%s\n' "$BROWSER" > "$CONF_DIR/browser"
+
+    # O prefixo do app_id e o nome do binario COMPILADO (kBrowserProcessExecutableName),
+    # nao o nome do wrapper no PATH. Por isso chromium vira "chrome": o Arch, o Debian,
+    # o Fedora, o snap e o flatpak renomeiam o arquivo, mas a constante continua chrome.
+    # Nao "corrija" isso de volta sem medir com scripts/detect-app-id.sh.
     case "$BROWSER" in
-        brave*)          PREFIX="brave" ;;
-        chromium*)       PREFIX="chromium" ;;
+        brave*)          PREFIX="brave" ;;        # medido
+        chromium*)       PREFIX="chrome" ;;       # medido
         google-chrome*)  PREFIX="chrome" ;;
         microsoft-edge*) PREFIX="msedge" ;;
-        vivaldi*)        PREFIX="vivaldi" ;;
+        vivaldi*)        PREFIX="vivaldi-bin" ;;  # nao medido, confira com detect-app-id.sh
         *)               PREFIX="chrome" ;;
     esac
     WMCLASS="${PREFIX}-web.whatsapp.com__-Default"
-    DETALHE="janela do ${BROWSER:-navegador} em --app"
+    DETALHE="janela do $BROWSER em --app"
 fi
 echo "lancador  -> $BIN_DIR/whatsapp-web"
 
-# 3. entrada de menu
-sed -e "s|@EXEC@|$BIN_DIR/whatsapp-web|" \
-    -e "s|@WMCLASS@|$WMCLASS|" \
-    "$REPO_DIR/src/whatsapp-web.desktop.in" > "$APP_DIR/whatsapp-web.desktop"
-chmod 644 "$APP_DIR/whatsapp-web.desktop"
+# 3. entrada de menu.
+# Substituicao feita no bash, sem sed: caminho com & ou | quebraria o sed
+# silenciosamente e deixaria um .desktop corrompido no menu.
+DESKTOP_OUT="$APP_DIR/whatsapp-web.desktop"
+TMP_DESK="$(mktemp)"
+while IFS= read -r linha || [ -n "$linha" ]; do
+    linha="${linha//@EXEC@/$BIN_DIR/whatsapp-web}"
+    linha="${linha//@WMCLASS@/$WMCLASS}"
+    printf '%s\n' "$linha"
+done < "$REPO_DIR/src/whatsapp-web.desktop.in" > "$TMP_DESK"
+mv "$TMP_DESK" "$DESKTOP_OUT"
+chmod 644 "$DESKTOP_OUT"
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APP_DIR" >/dev/null 2>&1 || true
-echo "menu      -> $APP_DIR/whatsapp-web.desktop"
+echo "menu      -> $DESKTOP_OUT"
 
 echo
 echo "modo instalado: $MODO ($DETALHE)"
 echo "StartupWMClass: $WMCLASS"
 echo
-echo "Abra pelo menu do desktop ou rode: whatsapp-web"
+
+case ":$PATH:" in
+    *":$BIN_DIR:"*) echo "Abra pelo menu do desktop ou rode: whatsapp-web" ;;
+    *)
+        echo "Abra pelo menu do desktop, ou rode pelo caminho completo:"
+        echo "  $BIN_DIR/whatsapp-web"
+        echo "($BIN_DIR nao esta no seu PATH)"
+        ;;
+esac
 [ "$MODO" = "leve" ] && echo "Se a janela aparecer na barra sem icone, rode: ./scripts/detect-app-id.sh"
 exit 0

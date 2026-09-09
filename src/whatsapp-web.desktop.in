@@ -1,9 +1,10 @@
 [Desktop Entry]
 Type=Application
+Version=1.0
 Name=WhatsApp Web
 GenericName=Mensageiro
 Comment=WhatsApp Web em janela propria
-Exec=@EXEC@
+Exec="@EXEC@"
 Icon=whatsapp-web
 Terminal=false
 Categories=Network;InstantMessaging;
