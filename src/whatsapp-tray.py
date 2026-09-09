@@ -117,6 +117,13 @@ class Janela(QMainWindow):
 
         PROFILE_DIR.mkdir(parents=True, exist_ok=True)
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        # A sessao logada mora no perfil. Sem isso nasce 0755 e outro usuario
+        # da maquina consegue ler os cookies de sessao.
+        for d in (DATA_DIR, PROFILE_DIR, CACHE_DIR):
+            try:
+                d.chmod(0o700)
+            except OSError:
+                pass
 
         self.profile = QWebEngineProfile("whatsapp", self)
         self.profile.setPersistentStoragePath(str(PROFILE_DIR))
