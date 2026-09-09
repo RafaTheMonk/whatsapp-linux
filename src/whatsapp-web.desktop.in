@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=WhatsApp Web
+GenericName=Mensageiro
+Comment=WhatsApp Web em janela propria
+Exec=@EXEC@
+Icon=whatsapp-web
+Terminal=false
+Categories=Network;InstantMessaging;
+Keywords=whatsapp;zap;mensagem;chat;
+StartupWMClass=@WMCLASS@
+StartupNotify=true
+SingleMainWindow=true

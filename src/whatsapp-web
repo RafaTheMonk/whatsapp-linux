@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Janela standalone do WhatsApp Web usando um navegador Chromium ja instalado.
+# Perfil isolado: a sessao do WhatsApp nao mistura com o navegador do dia a dia.
+set -euo pipefail
+
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/whatsapp-web"
+PROFILE="$DATA_DIR/profile"
+URL="https://web.whatsapp.com/"
+
+mkdir -p "$PROFILE"
+
+# Permite forcar o navegador: WHATSAPP_WEB_BROWSER=chromium whatsapp-web
+BROWSER="${WHATSAPP_WEB_BROWSER:-}"
+if [ -z "$BROWSER" ]; then
+    for b in brave brave-browser chromium chromium-browser google-chrome-stable google-chrome microsoft-edge-stable microsoft-edge vivaldi-stable vivaldi; do
+        if command -v "$b" >/dev/null 2>&1; then BROWSER="$b"; break; fi
+    done
+fi
+
+if [ -z "$BROWSER" ]; then
+    notify-send -i whatsapp-web "WhatsApp Web" "Nenhum navegador baseado em Chromium encontrado." 2>/dev/null || true
+    echo "erro: instale brave, chromium ou google-chrome" >&2
+    exit 1
+fi
+
+exec "$BROWSER" \
+    --app="$URL" \
+    --user-data-dir="$PROFILE" \
+    --class=WhatsAppWeb \
+    --name=WhatsAppWeb \
+    --ozone-platform-hint=auto \
+    --no-first-run \
+    --no-default-browser-check \
+    --disable-features=Translate \
+    "$@"
