@@ -25,16 +25,21 @@ Os caminhos possíveis:
 
 Este projeto não usa Electron em nenhum dos dois modos.
 
-## Os dois modos
+## As três formas
 
-| | modo leve | modo tray |
-|---|---|---|
-| Motor | Chromium já instalado, em `--app` | QtWebEngine, via PyQt6 |
-| Dependência nova | nenhuma | `python-pyqt6`, `python-pyqt6-webengine` |
-| Ícone na bandeja | não | sim, com contador de não lidas |
-| Fechar no X | encerra o app | esconde para a bandeja, sessão continua conectada |
-| Notificação com a janela fechada | não | sim |
-| Peso extra em disco | 0 | ~26 MB de bindings, se o `qt6-webengine` já estiver instalado |
+| | modo leve | modo tray | pacote Electron |
+|---|---|---|---|
+| Motor | Chromium já instalado, em `--app` | QtWebEngine, via PyQt6 | Chromium embutido |
+| Dependência nova | nenhuma | `python-pyqt6`, `python-pyqt6-webengine` | nenhuma, vai tudo dentro |
+| Ícone na bandeja | não | sim, com contador de não lidas | sim, com contador |
+| Fechar no X | encerra o app | esconde para a bandeja | esconde para a bandeja |
+| Notificação com a janela fechada | não | sim | sim |
+| Peso em disco | 0 | ~26 MB de bindings | ~103 MB (AppImage) ou ~72 MB (deb) |
+| Para quem | você, nesta máquina | você, quer bandeja e economia | **distribuir para outras pessoas** |
+
+As duas primeiras são scripts que rodam da própria pasta do repositório. A terceira
+é um pacote pronto (`AppImage`, `.deb`, `tar.gz`) para mandar para alguém que só
+quer baixar e usar. Detalhes de build e distribuição em [`electron/README.md`](electron/README.md).
 
 O modo tray existe porque o WhatsApp Web não desconecta quando você fecha a janela.
 Fechar no X e ter que reabrir e esperar carregar de novo é desperdício: o normal é o
@@ -48,6 +53,12 @@ cd whatsapp-linux
 ./install.sh                 # auto: tray se houver PyQt6, senão leve
 ./install.sh --modo tray     # força o modo com bandeja
 ./install.sh --modo leve     # força o modo sem dependência
+```
+
+Para gerar o pacote distribuível em vez de instalar aqui:
+
+```bash
+cd electron && npm install && npm run dist
 ```
 
 Dependências do modo tray:
