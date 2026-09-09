@@ -228,6 +228,72 @@ Alternativa pronta com bandeja: **ZapZap** (`paru -S zapzap` ou
   disco não criptografado: root lê tudo, e o histórico local do WhatsApp Web fica
   em claro dentro do perfil.
 
+## Auditoria
+
+O projeto é publicado justamente para ser conferido. O que segue é o caminho curto
+para quem quer verificar em vez de confiar.
+
+### Verificar o binário que você baixou
+
+Os checksums dos pacotes publicados estão em
+[`electron/SHA256SUMS.txt`](electron/SHA256SUMS.txt). Na pasta onde baixou:
+
+```bash
+sha256sum -c SHA256SUMS.txt
+```
+
+Se não bater, o arquivo não é o que este repositório gerou. Não rode.
+
+### Reproduzir o build
+
+```bash
+cd electron
+npm ci                                  # usa o package-lock.json versionado
+node node_modules/electron/install.js   # o npm 11 bloqueia esse postinstall
+npm run dist
+```
+
+O `package-lock.json` está no repositório, então dá para ver exatamente qual versão
+de cada dependência entra no pacote.
+
+### Onde olhar no código
+
+| O que verificar | Onde |
+|---|---|
+| Que URL o app carrega | `URL_ALVO` em `electron/src/main.js`, `URL` em `src/whatsapp-tray.py` |
+| Quais permissões são concedidas | `setPermissionRequestHandler` e `_permissao_qt68` |
+| Para onde vai a navegação externa | `setWindowOpenHandler` e `will-navigate` |
+| Que flags vão para o motor | bloco `QTWEBENGINE_CHROMIUM_FLAGS` e o `exec` em `src/whatsapp-web` |
+| Onde a sessão é gravada | `PROFILE_DIR`, `app.getPath("userData")` |
+
+### O que o app não faz
+
+- Não tem servidor próprio, nem telemetria, nem analytics. A única origem carregada
+  é `web.whatsapp.com`.
+- Não fica no meio da conversa: a criptografia ponta a ponta do WhatsApp é entre o
+  seu celular e o do contato. O app só desenha a janela.
+- Não checa atualização sozinho. O `electron-builder` embute um `app-update.yml` nos
+  pacotes, mas o código nunca chama o `autoUpdater`.
+- Não pede root em nenhum modo. O `.deb` instala em `/opt` como qualquer pacote.
+
+### Auditoria interna
+
+O código passou por uma revisão em três frentes (shell, segurança do navegador,
+portabilidade) com verificação adversarial de cada achado. Saldo: 31 achados, 7
+verificados a fundo, 3 confirmados e corrigidos, 4 refutados por não se sustentarem
+no ambiente real.
+
+Os três reais, todos já corrigidos:
+
+1. `detect-app-id.sh` filtrava pelo título da janela em vez da classe, e podia
+   gravar a classe do navegador comum no `.desktop`, dizendo que tinha acertado.
+2. O prefixo do `app_id` do Chromium estava errado (`chromium` em vez de `chrome`),
+   o que quebrava o ícone na barra de tarefas em toda máquina sem Brave.
+3. O diretório do perfil nascia `0755`, deixando a sessão legível por outros
+   usuários da máquina.
+
+Achou outra coisa? Abra uma issue.
+
 ## Licença
 
 MIT.
