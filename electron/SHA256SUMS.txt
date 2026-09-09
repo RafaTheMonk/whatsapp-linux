@@ -1,3 +1,3 @@
-555442dd0ef8e79a434229e5b414993e0c68eea968d49627f17f029471a05168  WhatsAppLinux-1.0.0-x86_64.AppImage
-5b6fefa62689dafc99aaca2bc1726e99402edbb4f2888d21bd080e90de32d31f  whatsapp-linux_1.0.0_amd64.deb
-9a314dd20a0a46221686e5d59387d64c7f4bdf2ac12c94fa61ae01ccd5d33877  whatsapp-linux-1.0.0.tar.gz
+c7aa7c7ebbe90dfd2bd4cc9028e26a1523969a4af45af44599cf89818107c915  WhatsAppLinux-1.0.0-x86_64.AppImage
+2ae8a8792076d7ea2f347f62226110e2c8672f1ea08d921c4c9007e341b14a43  whatsapp-linux_1.0.0_amd64.deb
+7496d9e1bf54d67cc595d9a9ad14acf1af96adf5a4a74cdb562d19faa79874bb  whatsapp-linux-1.0.0.tar.gz

@@ -38,6 +38,20 @@ repositório: publique em Releases ou num drive.
 - "Iniciar com o sistema" no menu da bandeja.
 - Primeira execução do AppImage oferece criar o atalho no menu de aplicativos.
 
+## Onde ficam os dados
+
+`~/.config/whatsapp-linux/`, com permissão `700`.
+
+O caminho é fixado no código com `app.setPath("userData", ...)`. Sem isso, em build
+empacotado o Electron deriva o diretório do `productName` e cria
+`~/.config/WhatsApp Linux`, com espaço, diferente do `app_id` e do nome do
+`.desktop`. Quem já rodou a versão anterior tem o diretório antigo renomeado
+automaticamente na primeira execução, sem perder o login.
+
+Para apagar a sessão: feche o app e remova esse diretório. Isso não desvincula o
+dispositivo, que continua listado no celular até você remover em Dispositivos
+conectados.
+
 ## app_id no Wayland
 
 No Wayland o Electron usa o nome do app como `app_id` da janela. Por isso o código
