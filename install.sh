@@ -134,6 +134,20 @@ echo "lancador  -> $BIN_DIR/whatsapp-web"
 # Substituicao feita no bash, sem sed: caminho com & ou | quebraria o sed
 # silenciosamente e deixaria um .desktop corrompido no menu.
 DESKTOP_OUT="$APP_DIR/whatsapp-web.desktop"
+
+# Se o detect-app-id.sh ja mediu o app_id real desta maquina, esse valor vale
+# mais que o nosso palpite por navegador. Preserva na reinstalacao.
+if [ "$MODO" = "leve" ] && [ -f "$DESKTOP_OUT" ]; then
+    MEDIDO="$(sed -n 's/^StartupWMClass=//p' "$DESKTOP_OUT")"
+    case "$MEDIDO" in
+        *web.whatsapp.com*)
+            if [ "$MEDIDO" != "$WMCLASS" ]; then
+                echo "mantendo o StartupWMClass ja medido nesta maquina: $MEDIDO"
+                WMCLASS="$MEDIDO"
+            fi
+            ;;
+    esac
+fi
 TMP_DESK="$(mktemp)"
 while IFS= read -r linha || [ -n "$linha" ]; do
     linha="${linha//@EXEC@/$BIN_DIR/whatsapp-web}"
