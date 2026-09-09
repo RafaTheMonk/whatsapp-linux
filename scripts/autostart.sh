@@ -2,8 +2,11 @@
 # Liga ou desliga a abertura automatica junto com a sessao.
 # No modo tray o app sobe ja escondido na bandeja.
 set -euo pipefail
+
+: "${HOME:?HOME nao definido}"
+
 SRC="${XDG_DATA_HOME:-$HOME/.local/share}/applications/whatsapp-web.desktop"
-DST="$HOME/.config/autostart/whatsapp-web.desktop"
+DST="${XDG_CONFIG_HOME:-$HOME/.config}/autostart/whatsapp-web.desktop"
 
 case "${1:-on}" in
     on)
@@ -11,9 +14,20 @@ case "${1:-on}" in
         mkdir -p "$(dirname "$DST")"
         cp "$SRC" "$DST"
         # Modo tray: subir oculto. Detecta pelo shebang do lancador.
-        EXEC_BIN="$(sed -n 's/^Exec=//p' "$DST" | awk '{print $1}')"
+        EXEC_LINE="$(sed -n 's/^Exec=//p' "$DST")"
+        EXEC_BIN="${EXEC_LINE%% *}"
+        EXEC_BIN="${EXEC_BIN%\"}"
+        EXEC_BIN="${EXEC_BIN#\"}"
         if head -1 "$EXEC_BIN" 2>/dev/null | grep -q python; then
-            sed -i 's|^Exec=\(.*\)$|Exec=\1 --hidden|' "$DST"
+            TMP="$(mktemp)"
+            while IFS= read -r linha || [ -n "$linha" ]; do
+                case "$linha" in
+                    Exec=*) printf '%s\n' "$linha --hidden" ;;
+                    *) printf '%s\n' "$linha" ;;
+                esac
+            done < "$DST" > "$TMP"
+            mv "$TMP" "$DST"
+            chmod 644 "$DST"
             echo "autostart ligado (inicia oculto na bandeja): $DST"
         else
             echo "autostart ligado: $DST"
