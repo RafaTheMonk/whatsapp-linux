@@ -17,6 +17,23 @@ import signal
 import sys
 from pathlib import Path
 
+# Precisa estar no ambiente ANTES de qualquer import do QtWebEngine.
+#
+# --in-process-gpu: em maquina com GPU hibrida (Intel + NVIDIA) o processo de GPU
+# do QtWebEngine sobe, o Qt reporta isVisible() True, e a janela nunca e mapeada
+# pelo compositor. Nada aparece na tela e nao ha erro no log. Rodar a GPU dentro
+# do proprio processo resolve e mantem a aceleracao. Medido em Intel RPL-P +
+# GeForce RTX 3050, KDE Plasma sobre Wayland.
+#
+# Alternativas que tambem funcionam, se esta causar problema na sua maquina:
+#   WHATSAPP_QTWEBENGINE_FLAGS="--disable-gpu-compositing" whatsapp-web
+#   WHATSAPP_QTWEBENGINE_FLAGS="--use-angle=gl" whatsapp-web
+#   WHATSAPP_QTWEBENGINE_FLAGS="--disable-gpu" whatsapp-web
+_FLAGS_PADRAO = "--in-process-gpu --disable-features=Translate"
+_flags = os.environ.get("WHATSAPP_QTWEBENGINE_FLAGS", _FLAGS_PADRAO)
+_anterior = os.environ.get("QTWEBENGINE_CHROMIUM_FLAGS", "")
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = f"{_anterior} {_flags}".strip()
+
 from PyQt6.QtCore import QSettings, QSize, Qt, QTimer, QUrl, pyqtSlot
 from PyQt6.QtGui import QAction, QColor, QGuiApplication, QIcon, QPainter, QPixmap
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
@@ -129,6 +146,8 @@ class Janela(QMainWindow):
         self.profile.setPersistentStoragePath(str(PROFILE_DIR))
         self.profile.setCachePath(str(CACHE_DIR))
         self.profile.setHttpUserAgent(USER_AGENT)
+        # Sem isto o QtWebEngine nao manda Accept-Language e a pagina abre em ingles.
+        self.profile.setHttpAcceptLanguage("pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
         self.profile.setPersistentCookiesPolicy(
             QWebEngineProfile.PersistentCookiesPolicy.ForcePersistentCookies
         )
@@ -327,8 +346,6 @@ def instancia_unica(app: App) -> QLocalServer | None:
 
 def main() -> int:
     comecar_oculto = "--hidden" in sys.argv or "--oculto" in sys.argv
-
-    os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-features=Translate")
 
     app = App(sys.argv)
     app.setApplicationName(APP_NAME)
