@@ -1,16 +1,28 @@
 #!/usr/bin/env bash
-# Janela standalone do WhatsApp Web usando um navegador Chromium ja instalado.
-# Perfil isolado: a sessao do WhatsApp nao mistura com o navegador do dia a dia.
+# Modo leve: janela standalone do WhatsApp Web num navegador Chromium ja instalado.
+# Perfil isolado: a sessao do WhatsApp nao se mistura com o navegador do dia a dia.
 set -euo pipefail
 
+: "${HOME:?HOME nao definido}"
+
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/whatsapp-web"
+CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/whatsapp-linux"
 PROFILE="$DATA_DIR/profile"
 URL="https://web.whatsapp.com/"
 
 mkdir -p "$PROFILE"
+# A sessao logada mora aqui. Sem isso o diretorio nasce 0755 e qualquer outro
+# usuario da maquina consegue ler os cookies de sessao.
+chmod 700 "$DATA_DIR" "$PROFILE" 2>/dev/null || true
 
-# Permite forcar o navegador: WHATSAPP_WEB_BROWSER=chromium whatsapp-web
+# Ordem de escolha: variavel de ambiente, navegador gravado na instalacao,
+# primeiro encontrado no PATH. O arquivo de config existe para o app rodar
+# sempre no mesmo navegador em que foi instalado.
 BROWSER="${WHATSAPP_WEB_BROWSER:-}"
+if [ -z "$BROWSER" ] && [ -r "$CONF_DIR/browser" ]; then
+    BROWSER="$(head -1 "$CONF_DIR/browser")"
+    command -v "$BROWSER" >/dev/null 2>&1 || BROWSER=""
+fi
 if [ -z "$BROWSER" ]; then
     for b in brave brave-browser chromium chromium-browser google-chrome-stable google-chrome microsoft-edge-stable microsoft-edge vivaldi-stable vivaldi; do
         if command -v "$b" >/dev/null 2>&1; then BROWSER="$b"; break; fi
