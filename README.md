@@ -189,6 +189,11 @@ lixeira, não some: até esvaziar a lixeira, os dados de sessão continuam no di
 - **Modo leve:** sem bandeja. Fechar a janela encerra o app. Use o modo tray se isso
   incomodar.
 - **Notificações** exigem aceitar a permissão do site na primeira vez.
+- **Modo tray em GPU híbrida:** o app passa `--in-process-gpu` ao QtWebEngine. Sem
+  isso, em máquina com Intel + NVIDIA a janela nunca é mapeada pelo compositor: o Qt
+  reporta `isVisible() == True`, nada aparece na tela e não há erro no log. Se essa
+  flag causar problema na sua máquina, sobrescreva:
+  `WHATSAPP_QTWEBENGINE_FLAGS="--disable-gpu-compositing" whatsapp-web`
 - **Chamadas de voz e vídeo** do WhatsApp Web dependem do que o motor suporta.
   No modo leve funciona igual ao navegador. No modo tray o app já concede microfone
   e câmera, mas o QtWebEngine pode não ter todos os codecs proprietários compilados,
