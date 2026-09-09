@@ -169,6 +169,10 @@ como `app_id`, que é justamente o nome do arquivo `.desktop`.
 ./uninstall.sh --purge   # remove também perfil e cache, mandando para a lixeira
 ```
 
+Apagar o perfil **não desvincula o dispositivo**. A sessão continua listada no
+celular até você remover na mão, em Dispositivos conectados. E o perfil vai para a
+lixeira, não some: até esvaziar a lixeira, os dados de sessão continuam no disco.
+
 ## Limitações conhecidas
 
 - **Modo leve:** sem bandeja. Fechar a janela encerra o app. Use o modo tray se isso
@@ -178,6 +182,17 @@ como `app_id`, que é justamente o nome do arquivo `.desktop`.
   No modo leve funciona igual ao navegador. No modo tray o app já concede microfone
   e câmera, mas o QtWebEngine pode não ter todos os codecs proprietários compilados,
   dependendo de como a distro empacotou.
+- **Navegador em Flatpak ou Snap** não é detectado pelo modo leve, que procura
+  binário no `PATH`. Mesmo apontando na mão, o sandbox do Flatpak bloquearia o
+  `--user-data-dir` fora dele. Use um navegador nativo ou o modo tray.
+- **Modo leve não tem barra de endereços**, então não dá para revogar permissão de
+  câmera e microfone pela interface. Para revogar, apague o perfil
+  (`./uninstall.sh --purge`) ou use o modo tray, onde a lista de permissões é
+  fechada no código.
+- **Perfil novo do Brave nasce com a telemetria padrão ligada**, mesmo que você a
+  tenha desligado no perfil principal. São perfis independentes. Se isso importa,
+  abra as configurações do navegador dentro do perfil isolado uma vez, ou use o
+  modo tray, que não é Brave.
 
 Alternativa pronta com bandeja: **ZapZap** (`paru -S zapzap` ou
 `flatpak install flathub com.rtosta.zapzap`), também PyQt6, mantido ativamente.
@@ -192,10 +207,10 @@ Alternativa pronta com bandeja: **ZapZap** (`paru -S zapzap` ou
   da conversa, só desenha a janela.
 - No modo tray, permissões do site são concedidas por lista fechada e só para hosts
   do WhatsApp. Navegação para fora sai para o navegador padrão.
-- O perfil guarda as credenciais de sessão em `~/.local/share/whatsapp-web/`, com a
-  mesma proteção que o navegador dá ao seu perfil normal. Quem tiver acesso de
-  leitura à sua conta de usuário tem acesso à sessão. Vale o cuidado de sempre com
-  disco não criptografado.
+- O diretório do perfil é criado com permissão `700`, então outros usuários da
+  máquina não leem os cookies de sessão. Continua valendo o cuidado de sempre com
+  disco não criptografado: root lê tudo, e o histórico local do WhatsApp Web fica
+  em claro dentro do perfil.
 
 ## Licença
 
