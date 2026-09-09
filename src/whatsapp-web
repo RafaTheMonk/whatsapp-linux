@@ -6,7 +6,7 @@ set -euo pipefail
 : "${HOME:?HOME nao definido}"
 
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/whatsapp-web"
-CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/whatsapp-linux"
+CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/whatsapp-web"
 PROFILE="$DATA_DIR/profile"
 URL="https://web.whatsapp.com/"
 

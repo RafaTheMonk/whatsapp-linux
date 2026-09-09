@@ -238,7 +238,7 @@ class Janela(QMainWindow):
         QApplication.instance().quit()
 
     def _restaurar_geometria(self) -> None:
-        geo = QSettings("whatsapp-linux", "tray").value("geometria")
+        geo = QSettings("whatsapp-web", "tray").value("geometria")
         if geo is not None:
             self.restoreGeometry(geo)
         else:
@@ -246,7 +246,7 @@ class Janela(QMainWindow):
 
     def _salvar_geometria(self) -> None:
         if not self.isMinimized():
-            QSettings("whatsapp-linux", "tray").setValue("geometria", self.saveGeometry())
+            QSettings("whatsapp-web", "tray").setValue("geometria", self.saveGeometry())
 
     # ---- integracao ----------------------------------------------------
 

@@ -16,7 +16,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 ICON_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor"
-CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/whatsapp-linux"
+CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/whatsapp-web"
 
 MODO="auto"
 while [ $# -gt 0 ]; do
