@@ -34,6 +34,22 @@ const ARQ_ESTADO = () => path.join(app.getPath("userData"), "estado.json");
 const ICONE = path.join(__dirname, "..", "build", "icon.png");
 const ICONE_TRAY = path.join(__dirname, "..", "build", "tray.png");
 
+// Em build empacotado o Electron deriva o userData do productName, virando
+// "WhatsApp Linux" com espaco: diferente do app_id, do nome do .desktop e do
+// resto do projeto, e fora do alcance do uninstall. Fixa o caminho antes de
+// qualquer uso da sessao e migra o diretorio antigo, para nao perder o login de
+// quem ja rodou a versao anterior.
+const DIR_DADOS = path.join(app.getPath("appData"), "whatsapp-linux");
+const DIR_ANTIGO = path.join(app.getPath("appData"), "WhatsApp Linux");
+try {
+  if (fs.existsSync(DIR_ANTIGO) && !fs.existsSync(DIR_DADOS)) {
+    fs.renameSync(DIR_ANTIGO, DIR_DADOS);
+  }
+} catch (e) {
+  console.error("nao consegui migrar o perfil antigo:", e.message);
+}
+app.setPath("userData", DIR_DADOS);
+
 let janela = null;
 let tray = null;
 let encerrando = false;
@@ -58,6 +74,23 @@ function gravarEstado(patch) {
     fs.writeFileSync(ARQ_ESTADO(), JSON.stringify({ ...atual, ...patch }, null, 2));
   } catch (e) {
     console.error("nao consegui gravar o estado:", e.message);
+  }
+}
+
+/**
+ * A sessao logada mora no userData. Sem isto o diretorio nasce 0755 e qualquer
+ * outro usuario da maquina consegue ler os cookies de sessao. Os modos leve e
+ * tray ja fazem o mesmo com os perfis deles.
+ */
+function protegerPerfil() {
+  const dirs = new Set([app.getPath("userData"), app.getPath("sessionData")]);
+  for (const dir of dirs) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.chmodSync(dir, 0o700);
+    } catch (e) {
+      console.error("nao consegui restringir a permissao de", dir, e.message);
+    }
   }
 }
 
@@ -340,6 +373,7 @@ if (!app.requestSingleInstanceLock()) {
   app.setName("whatsapp-linux");
 
   app.whenReady().then(async () => {
+    protegerPerfil();
     session.defaultSession.setUserAgent(USER_AGENT);
     montarMenu();
     montarJanela();
