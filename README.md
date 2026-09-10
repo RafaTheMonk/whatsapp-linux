@@ -292,6 +292,26 @@ Os três reais, todos já corrigidos:
 3. O diretório do perfil nascia `0755`, deixando a sessão legível por outros
    usuários da máquina.
 
+O app Electron passou depois por uma auditoria própria, nas mesmas três frentes.
+Saldo: 36 achados, 4 confirmados. O mais grave era de distribuição, não de código:
+o pacote saía com **Electron 33 (Chromium 130, de outubro de 2024)**, fora de
+suporte e exposto a três CVEs de V8 no catálogo KEV da CISA. Um wrapper é um
+navegador inteiro; entregar um navegador congelado a quem não sabe que recebeu um
+navegador é o defeito mais caro que este projeto poderia ter. Corrigido para
+Electron 44 antes de qualquer distribuição.
+
+Os outros três confirmados:
+
+1. O bloco `linux.desktop` estava escrito no schema do electron-builder 26 rodando
+   sobre o 25, então o `.desktop` dentro do `.deb` saía com a linha inválida
+   `entry=[object Object]` e `StartupWMClass` errado. O bug de ícone que este
+   README descreve como resolvido estava vivo dentro do pacote.
+2. "Iniciar com o sistema" não fazia nada: `setLoginItemSettings` é só macOS e
+   Windows. Agora escreve o `.desktop` em `~/.config/autostart` na mão.
+3. O `postinst` do `.deb` deixava o `chrome-sandbox` sem SUID no Ubuntu 24.04,
+   porque testa user namespace como root. O pacote instalava e não abria,
+   exatamente onde a documentação mandava usar o `.deb`.
+
 Achou outra coisa? Abra uma issue.
 
 ## Licença

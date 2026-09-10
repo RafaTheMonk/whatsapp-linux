@@ -49,8 +49,21 @@ Ou rode sem instalar nada:
 ./WhatsAppLinux-1.0.0-x86_64.AppImage --appimage-extract-and-run
 ```
 
-**Erro de sandbox no Ubuntu 24.04:** use o `.deb` em vez do AppImage. É o caminho
-certo nessa versão.
+**Erro de sandbox no Ubuntu 24.04:** use o `.deb` em vez do AppImage. Ele já vem
+preparado para essa versão.
+
+## Conferir o arquivo antes de rodar
+
+Junto dos pacotes vai um `SHA256SUMS.txt`. Na pasta onde você baixou:
+
+```bash
+sha256sum -c SHA256SUMS.txt
+```
+
+Se aparecer `SUCESSO`, o arquivo é exatamente o que foi publicado. Se não bater,
+não rode.
+
+O código está aberto em https://github.com/RafaTheMonk/whatsapp-linux
 
 ## Privacidade
 

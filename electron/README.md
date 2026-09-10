@@ -18,9 +18,9 @@ Saída em `electron/dist/`:
 
 | Arquivo | Tamanho | Para quem |
 |---|---|---|
-| `WhatsAppLinux-1.0.0-x86_64.AppImage` | ~103 MB | qualquer distro, sem instalar |
-| `whatsapp-linux_1.0.0_amd64.deb` | ~72 MB | Ubuntu, Mint, Debian, Pop!_OS |
-| `whatsapp-linux-1.0.0.tar.gz` | ~98 MB | descompactar e rodar |
+| `WhatsAppLinux-1.0.0-x86_64.AppImage` | ~119 MB | qualquer distro, sem instalar |
+| `whatsapp-linux_1.0.0_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
+| `whatsapp-linux-1.0.0.tar.gz` | ~114 MB | descompactar e rodar |
 
 `dist/` e `node_modules/` estão no `.gitignore`. Os binários não vão para o
 repositório: publique em Releases ou num drive.
@@ -59,6 +59,36 @@ chama `app.setName("whatsapp-linux")`, igual ao `StartupWMClass` do `.desktop`.
 Com `app.setName("WhatsApp Linux")` o `app_id` sai com espaço, não casa, e a janela
 cai na barra de tarefas sem ícone. Medido no KDE Plasma sobre Wayland.
 
+## Versão do Electron e atualização
+
+O projeto pina a versão exata do Electron, sem caret, para o build ser
+reproduzível. Hoje: **Electron 44.3.0, com Chromium 152**.
+
+Isto não é detalhe de dependência, é postura de segurança. Um wrapper é um
+navegador inteiro: entregar um Electron fora de suporte é entregar um navegador
+com CVE conhecida para alguém que nem sabe que recebeu um navegador. A primeira
+versão deste projeto saiu com Electron 33 (Chromium 130, de outubro de 2024), que
+já estava fora de suporte e vulnerável a três CVEs de V8 no catálogo KEV da CISA.
+Foi corrigido antes de qualquer distribuição.
+
+Regra: **rebuild a cada release de segurança do Electron**, não a cada mudança de
+funcionalidade. Confira a linha suportada em https://endoflife.date/electron.
+
+O app não tem auto-update. O `publish` está desligado justamente para não embutir
+um `app-update.yml` apontando para um canal que não existe. Atualizar é baixar o
+pacote novo.
+
+## O .deb e o sandbox
+
+O `postinst` do pacote é substituído por `build/deb-after-install.sh`. Motivo: o
+script padrão do electron-builder decide o modo do sandbox rodando
+`unshare --user true` **como root**. No Ubuntu 24.04 o AppArmor bloqueia user
+namespace sem privilégio para o usuário comum, mas não para o root, então o teste
+passa, o `chrome-sandbox` fica `0755` e o app não abre para quem instalou. O script
+próprio força o SUID, que é o modo de sandbox que o Chromium oferece para kernel
+sem userns utilizável, e repete o `update-alternatives` do original (o
+`afterInstall` substitui o postinst inteiro, não acrescenta).
+
 ## Limites de cada formato
 
 **AppImage** resolve dependência e distro, não resolve tudo:
@@ -69,8 +99,8 @@ cai na barra de tarefas sem ícone. Medido no KDE Plasma sobre Wayland.
   (`sudo apt install libfuse2`). Alternativa sem instalar nada:
   `./WhatsAppLinux-1.0.0-x86_64.AppImage --appimage-extract-and-run`
 - No Ubuntu 24.04 o AppArmor bloqueia user namespace sem privilégio e o sandbox do
-  Chromium falha. Contornos: usar o `.deb`, ou rodar com `--no-sandbox` (que
-  desliga uma camada de segurança, então prefira o `.deb`).
+  Chromium falha. Use o `.deb`, que instala o `chrome-sandbox` com SUID e por isso
+  não depende de user namespace. Não use `--no-sandbox`.
 
 **deb** não tem nenhum desses problemas: instala, cria o atalho e configura o
 `chrome-sandbox` com SUID. É o caminho recomendado para Ubuntu e derivados.
