@@ -24,31 +24,39 @@ const path = require("path");
 
 const URL_ALVO = "https://web.whatsapp.com/";
 const HOSTS_PERMITIDOS = new Set(["web.whatsapp.com", "www.whatsapp.com", "whatsapp.com"]);
+// shell.openExternal entrega a URL ao handler do sistema. Sem lista fechada,
+// a pagina consegue disparar file://, smb://, vscode:// ou qualquer esquema
+// registrado na maquina de quem baixou.
+const ESQUEMAS_EXTERNOS = new Set(["http:", "https:", "mailto:", "tel:"]);
 
-// O WhatsApp Web recusa user agent que anuncia Electron.
+// O WhatsApp Web recusa user agent que anuncia Electron. Derivar do Chromium
+// real em vez de fixar: versao fixa vira mentira no proximo upgrade.
 const USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-  "Chrome/130.0.0.0 Safari/537.36";
-
-const ARQ_ESTADO = () => path.join(app.getPath("userData"), "estado.json");
-const ICONE = path.join(__dirname, "..", "build", "icon.png");
-const ICONE_TRAY = path.join(__dirname, "..", "build", "tray.png");
+  `Chrome/${process.versions.chrome.split(".")[0]}.0.0.0 Safari/537.36`;
 
 // Em build empacotado o Electron deriva o userData do productName, virando
 // "WhatsApp Linux" com espaco: diferente do app_id, do nome do .desktop e do
 // resto do projeto, e fora do alcance do uninstall. Fixa o caminho antes de
-// qualquer uso da sessao e migra o diretorio antigo, para nao perder o login de
-// quem ja rodou a versao anterior.
+// qualquer uso da sessao.
 const DIR_DADOS = path.join(app.getPath("appData"), "whatsapp-linux");
 const DIR_ANTIGO = path.join(app.getPath("appData"), "WhatsApp Linux");
-try {
-  if (fs.existsSync(DIR_ANTIGO) && !fs.existsSync(DIR_DADOS)) {
-    fs.renameSync(DIR_ANTIGO, DIR_DADOS);
-  }
-} catch (e) {
-  console.error("nao consegui migrar o perfil antigo:", e.message);
-}
+migrarPerfilAntigo();
 app.setPath("userData", DIR_DADOS);
+
+const ARQ_ESTADO = () => path.join(app.getPath("userData"), "estado.json");
+const AUTOSTART = path.join(
+  process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config"),
+  "autostart",
+  "whatsapp-linux.desktop"
+);
+const DESKTOP_MENU = path.join(
+  process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local/share"),
+  "applications",
+  "whatsapp-linux.desktop"
+);
+const ICONE = path.join(__dirname, "..", "build", "icon.png");
+const ICONE_TRAY = path.join(__dirname, "..", "build", "tray.png");
 
 let janela = null;
 let tray = null;
@@ -57,34 +65,33 @@ let naoLidas = 0;
 
 const comecarOculto = process.argv.includes("--hidden") || process.argv.includes("--oculto");
 
-/* ---------------------------------------------------------------- estado */
-
-function lerEstado() {
+/**
+ * Renomeia o diretorio da versao antiga. So age quando o destino ainda nao
+ * existe: com os dois presentes, abandonar um em silencio faria o usuario
+ * perder o login sem entender por que.
+ */
+function migrarPerfilAntigo() {
   try {
-    return JSON.parse(fs.readFileSync(ARQ_ESTADO(), "utf8"));
-  } catch {
-    return {};
-  }
-}
-
-function gravarEstado(patch) {
-  const atual = lerEstado();
-  try {
-    fs.mkdirSync(app.getPath("userData"), { recursive: true });
-    fs.writeFileSync(ARQ_ESTADO(), JSON.stringify({ ...atual, ...patch }, null, 2));
+    if (!fs.existsSync(DIR_ANTIGO)) return;
+    if (!fs.existsSync(DIR_DADOS)) {
+      fs.renameSync(DIR_ANTIGO, DIR_DADOS);
+      return;
+    }
+    console.warn(
+      `perfil antigo mantido em ${DIR_ANTIGO}; o app usa ${DIR_DADOS}. ` +
+        "Apague o antigo quando tiver certeza de que nao precisa dele."
+    );
   } catch (e) {
-    console.error("nao consegui gravar o estado:", e.message);
+    console.error("nao consegui migrar o perfil antigo:", e.message);
   }
 }
 
 /**
- * A sessao logada mora no userData. Sem isto o diretorio nasce 0755 e qualquer
- * outro usuario da maquina consegue ler os cookies de sessao. Os modos leve e
- * tray ja fazem o mesmo com os perfis deles.
+ * A sessao logada mora no userData. Sem isto o diretorio pode ficar 0755 e
+ * outro usuario da maquina le os cookies de sessao.
  */
 function protegerPerfil() {
-  const dirs = new Set([app.getPath("userData"), app.getPath("sessionData")]);
-  for (const dir of dirs) {
+  for (const dir of new Set([app.getPath("userData"), app.getPath("sessionData")])) {
     try {
       fs.mkdirSync(dir, { recursive: true });
       fs.chmodSync(dir, 0o700);
@@ -94,71 +101,162 @@ function protegerPerfil() {
   }
 }
 
+/* ---------------------------------------------------------------- estado */
+
+function lerEstado() {
+  try {
+    const d = JSON.parse(fs.readFileSync(ARQ_ESTADO(), "utf8"));
+    return d && typeof d === "object" && !Array.isArray(d) ? d : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Escrita atomica: um desligamento no meio do write deixaria JSON truncado. */
+function gravarEstado(patch) {
+  const alvo = ARQ_ESTADO();
+  const tmp = `${alvo}.tmp`;
+  try {
+    fs.mkdirSync(path.dirname(alvo), { recursive: true });
+    fs.writeFileSync(tmp, JSON.stringify({ ...lerEstado(), ...patch }, null, 2));
+    fs.renameSync(tmp, alvo);
+  } catch (e) {
+    console.error("nao consegui gravar o estado:", e.message);
+    try {
+      fs.unlinkSync(tmp);
+    } catch {
+      /* nada a fazer */
+    }
+  }
+}
+
+/* ------------------------------------------------------------- autostart */
+
+/**
+ * app.setLoginItemSettings e documentado como darwin/win32 apenas: no Linux nao
+ * cria nada e a leitura volta sempre false. O que o Linux usa de fato e um
+ * .desktop em ~/.config/autostart.
+ */
+function autostartAtivo() {
+  try {
+    return fs.existsSync(AUTOSTART);
+  } catch {
+    return false;
+  }
+}
+
+function definirAutostart(ligar) {
+  try {
+    if (!ligar) {
+      fs.rmSync(AUTOSTART, { force: true });
+      return true;
+    }
+    fs.mkdirSync(path.dirname(AUTOSTART), { recursive: true });
+    fs.writeFileSync(AUTOSTART, montarDesktop(caminhoExecutavel(), ["--hidden"]));
+    fs.chmodSync(AUTOSTART, 0o644);
+    return true;
+  } catch (e) {
+    dialog.showErrorBox("WhatsApp Linux", "Nao consegui alterar o autostart: " + e.message);
+    return false;
+  }
+}
+
 /* -------------------------------------------------- integracao no menu */
 
 /**
- * AppImage roda solto: nao aparece no menu de aplicativos sozinho.
- * Na primeira execucao, oferece criar a entrada apontando para o proprio
- * arquivo. Em .deb e tar.gz isso ja vem pronto, entao nem pergunta.
+ * APPIMAGE vem do ambiente. Uma quebra de linha no caminho injeta uma segunda
+ * chave Exec= no .desktop, e o parser do freedesktop obedece a injetada.
+ */
+function caminhoExecutavel() {
+  const p = process.env.APPIMAGE || process.execPath;
+  if (/[\n\r]/.test(p)) {
+    throw new Error("caminho do executavel contem quebra de linha");
+  }
+  return p;
+}
+
+function montarDesktop(exec, args = []) {
+  const linhaExec = [`"${exec}"`, ...args].join(" ");
+  return [
+    "[Desktop Entry]",
+    "Type=Application",
+    "Version=1.0",
+    "Name=WhatsApp Linux",
+    "GenericName=Mensageiro",
+    "Comment=WhatsApp Web em janela propria",
+    `Exec=${linhaExec}`,
+    "Icon=whatsapp-linux",
+    "Terminal=false",
+    "Categories=Network;InstantMessaging;",
+    "Keywords=whatsapp;zap;mensagem;chat;",
+    "StartupWMClass=whatsapp-linux",
+    "StartupNotify=true",
+    "SingleMainWindow=true",
+    "",
+  ].join("\n");
+}
+
+/** O atalho aponta para um arquivo que ainda existe? */
+function atalhoValido() {
+  try {
+    const conteudo = fs.readFileSync(DESKTOP_MENU, "utf8");
+    const m = /^Exec=(.*)$/m.exec(conteudo);
+    if (!m) return false;
+    const alvo = m[1].trim().replace(/^"(.*?)"( .*)?$/, "$1");
+    return fs.existsSync(alvo);
+  } catch {
+    return false;
+  }
+}
+
+function escreverAtalho() {
+  const dirIcone = path.join(
+    process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local/share"),
+    "icons/hicolor/512x512/apps"
+  );
+  fs.mkdirSync(dirIcone, { recursive: true });
+  fs.copyFileSync(ICONE, path.join(dirIcone, "whatsapp-linux.png"));
+  fs.mkdirSync(path.dirname(DESKTOP_MENU), { recursive: true });
+  fs.writeFileSync(DESKTOP_MENU, montarDesktop(caminhoExecutavel()));
+  fs.chmodSync(DESKTOP_MENU, 0o644);
+}
+
+/**
+ * AppImage roda solto: nao aparece no menu de aplicativos sozinho. Oferece criar
+ * a entrada. Volta a oferecer se o atalho existente apontar para um arquivo que
+ * sumiu, que e o que acontece quando o AppImage e movido de pasta.
  */
 async function oferecerIntegracao() {
-  const appimage = process.env.APPIMAGE;
-  if (!appimage) return;
+  if (!process.env.APPIMAGE) return;
 
   const estado = lerEstado();
-  if (estado.integracaoRespondida) return;
-
-  const destinoDesktop = path.join(
-    os.homedir(),
-    ".local/share/applications/whatsapp-linux.desktop"
-  );
-  if (fs.existsSync(destinoDesktop)) {
-    gravarEstado({ integracaoRespondida: true });
-    return;
-  }
+  const existe = fs.existsSync(DESKTOP_MENU);
+  const quebrado = existe && !atalhoValido();
+  if (existe && !quebrado) return;
+  if (!existe && estado.integracaoRecusada && !quebrado) return;
 
   const r = await dialog.showMessageBox({
     type: "question",
     title: "WhatsApp Linux",
-    message: "Adicionar ao menu de aplicativos?",
-    detail:
-      "Cria o atalho apontando para este arquivo, com icone. " +
-      "Se mover o AppImage de lugar depois, e so responder de novo.",
-    buttons: ["Adicionar", "Agora nao"],
+    message: quebrado ? "Corrigir o atalho no menu?" : "Adicionar ao menu de aplicativos?",
+    detail: quebrado
+      ? "O atalho existente aponta para um arquivo que nao esta mais la. " +
+        "Posso reapontar para este AppImage."
+      : "Cria o atalho apontando para este arquivo, com icone. Se mover o " +
+        "AppImage de lugar depois, o app oferece corrigir.",
+    buttons: [quebrado ? "Corrigir" : "Adicionar", "Agora nao"],
     defaultId: 0,
     cancelId: 1,
   });
 
-  gravarEstado({ integracaoRespondida: true });
-  if (r.response !== 0) return;
+  if (r.response !== 0) {
+    gravarEstado({ integracaoRecusada: true });
+    return;
+  }
 
   try {
-    const dirIcone = path.join(os.homedir(), ".local/share/icons/hicolor/512x512/apps");
-    fs.mkdirSync(dirIcone, { recursive: true });
-    fs.copyFileSync(ICONE, path.join(dirIcone, "whatsapp-linux.png"));
-
-    fs.mkdirSync(path.dirname(destinoDesktop), { recursive: true });
-    fs.writeFileSync(
-      destinoDesktop,
-      [
-        "[Desktop Entry]",
-        "Type=Application",
-        "Version=1.0",
-        "Name=WhatsApp Linux",
-        "GenericName=Mensageiro",
-        "Comment=WhatsApp Web em janela propria",
-        `Exec="${appimage}"`,
-        "Icon=whatsapp-linux",
-        "Terminal=false",
-        "Categories=Network;InstantMessaging;",
-        "Keywords=whatsapp;zap;mensagem;chat;",
-        "StartupWMClass=whatsapp-linux",
-        "StartupNotify=true",
-        "SingleMainWindow=true",
-        "",
-      ].join("\n")
-    );
-    fs.chmodSync(destinoDesktop, 0o644);
+    escreverAtalho();
+    gravarEstado({ integracaoRecusada: false });
   } catch (e) {
     dialog.showErrorBox("WhatsApp Linux", "Nao consegui criar o atalho: " + e.message);
   }
@@ -166,31 +264,33 @@ async function oferecerIntegracao() {
 
 /* -------------------------------------------------------------- bandeja */
 
-/** Pinta o contador de nao lidas sobre o icone da bandeja. */
-function iconeComBadge(n) {
-  const base = nativeImage.createFromPath(ICONE_TRAY);
-  if (n <= 0 || base.isEmpty()) return base;
-  // Sem canvas no processo principal: sinaliza pelo tooltip e pelo badge do
-  // dock, e mantem o icone estavel para nao piscar na bandeja.
-  return base;
-}
-
 function atualizarNaoLidas(titulo) {
-  const m = /\((\d+)\)/.exec(titulo || "");
+  // O WhatsApp escreve o contador so no inicio do titulo, tipo "(3) WhatsApp".
+  const m = /^\((\d+)\+?\)/.exec((titulo || "").trim());
   const n = m ? parseInt(m[1], 10) : 0;
   if (n === naoLidas) return;
   naoLidas = n;
   if (tray) {
     tray.setToolTip(n ? `WhatsApp Linux - ${n} nao lidas` : "WhatsApp Linux");
-    tray.setImage(iconeComBadge(n));
   }
-  if (app.isReady() && typeof app.setBadgeCount === "function") {
+  // Só funciona em ambiente com Unity launcher; no KDE devolve false.
+  try {
     app.setBadgeCount(n);
+  } catch {
+    /* ambiente sem suporte a badge */
   }
 }
 
 function montarBandeja() {
-  tray = new Tray(iconeComBadge(0));
+  try {
+    tray = new Tray(nativeImage.createFromPath(ICONE_TRAY));
+  } catch (e) {
+    // GNOME sem extensao AppIndicator, por exemplo. Sem bandeja, esconder no X
+    // deixaria o app sem nenhuma forma de voltar nem de encerrar.
+    console.error("bandeja indisponivel, o X vai encerrar o app:", e.message);
+    tray = null;
+    return;
+  }
   tray.setToolTip("WhatsApp Linux");
 
   const menu = Menu.buildFromTemplate([
@@ -200,22 +300,13 @@ function montarBandeja() {
     {
       label: "Iniciar com o sistema",
       type: "checkbox",
-      checked: app.getLoginItemSettings().openAtLogin,
+      checked: autostartAtivo(),
       click: (item) => {
-        app.setLoginItemSettings({
-          openAtLogin: item.checked,
-          args: ["--hidden"],
-        });
+        if (!definirAutostart(item.checked)) item.checked = autostartAtivo();
       },
     },
     { type: "separator" },
-    {
-      label: "Sair",
-      click: () => {
-        encerrando = true;
-        app.quit();
-      },
-    },
+    { label: "Sair", click: sair },
   ]);
 
   tray.setContextMenu(menu);
@@ -223,7 +314,10 @@ function montarBandeja() {
 }
 
 function alternar() {
-  if (!janela) return;
+  if (!janela || janela.isDestroyed()) {
+    montarJanela();
+    return;
+  }
   if (janela.isVisible() && !janela.isMinimized()) {
     janela.hide();
   } else {
@@ -232,11 +326,37 @@ function alternar() {
   }
 }
 
+function sair() {
+  encerrando = true;
+  app.quit();
+}
+
 /* --------------------------------------------------------------- janela */
 
+function externo(url) {
+  try {
+    const u = new URL(url);
+    if (!ESQUEMAS_EXTERNOS.has(u.protocol)) {
+      console.warn("esquema bloqueado:", u.protocol);
+      return;
+    }
+    shell.openExternal(url);
+  } catch {
+    /* url invalida: ignora */
+  }
+}
+
+function ehDoWhatsApp(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && HOSTS_PERMITIDOS.has(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function montarJanela() {
-  const estado = lerEstado();
-  const bounds = estado.bounds || { width: 1100, height: 780 };
+  const bounds = lerEstado().bounds || { width: 1100, height: 780 };
 
   janela = new BrowserWindow({
     ...bounds,
@@ -251,53 +371,50 @@ function montarJanela() {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: true,
+      // A promessa central e receber mensagem em segundo plano. Sem isto o
+      // Chromium estrangula os timers da janela escondida.
+      backgroundThrottling: false,
     },
   });
 
-  const ses = janela.webContents.session;
-  ses.setUserAgent(USER_AGENT);
-
-  // Concede so o que o WhatsApp precisa, e so para os hosts dele.
-  ses.setPermissionRequestHandler((wc, permissao, aceitar, detalhes) => {
-    const liberadas = ["notifications", "media", "clipboard-read", "clipboard-sanitized-write"];
-    let host = "";
-    try {
-      host = new URL(detalhes.requestingUrl || wc.getURL()).hostname;
-    } catch {
-      host = "";
-    }
-    aceitar(HOSTS_PERMITIDOS.has(host) && liberadas.includes(permissao));
-  });
+  const wc = janela.webContents;
 
   // Link externo sai para o navegador padrao em vez de abrir janela do app.
-  janela.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+  wc.setWindowOpenHandler(({ url }) => {
+    externo(url);
     return { action: "deny" };
   });
-  janela.webContents.on("will-navigate", (e, url) => {
-    try {
-      if (!HOSTS_PERMITIDOS.has(new URL(url).hostname)) {
-        e.preventDefault();
-        shell.openExternal(url);
-      }
-    } catch {
-      /* url invalida: deixa o Chromium decidir */
-    }
-  });
 
-  janela.webContents.on("page-title-updated", (e, titulo) => {
+  // will-navigate cobre clique e location.href. will-redirect cobre o 302, que
+  // sem isto tira o frame principal do allowlist sem passar por lugar nenhum.
+  const barrarSaida = (e, url) => {
+    if (!ehDoWhatsApp(url)) {
+      e.preventDefault();
+      externo(url);
+    }
+  };
+  wc.on("will-navigate", barrarSaida);
+  wc.on("will-redirect", barrarSaida);
+
+  wc.on("page-title-updated", (e, titulo) => {
     e.preventDefault();
     atualizarNaoLidas(titulo);
   });
 
-  // X fecha para a bandeja. So encerra de verdade pelo menu Sair.
+  // Sem isto, uma queda do renderer deixa a janela branca para sempre.
+  wc.on("render-process-gone", (e, detalhes) => {
+    console.error("renderer caiu:", detalhes.reason);
+    if (detalhes.reason !== "clean-exit" && !encerrando) wc.reload();
+  });
+  wc.on("did-fail-load", (e, code, desc, url, principal) => {
+    if (principal && code !== -3) console.error("falha ao carregar:", code, desc, url);
+  });
+
   janela.on("close", (e) => {
-    if (encerrando) {
-      salvarBounds();
-      return;
-    }
-    e.preventDefault();
     salvarBounds();
+    // Sem bandeja nao ha como reabrir nem encerrar: deixa o X fechar de verdade.
+    if (encerrando || !tray) return;
+    e.preventDefault();
     janela.hide();
   });
 
@@ -306,27 +423,68 @@ function montarJanela() {
   });
 
   janela.loadURL(URL_ALVO, { userAgent: USER_AGENT });
-
   janela.once("ready-to-show", () => {
     if (!comecarOculto) janela.show();
   });
 }
 
 function salvarBounds() {
-  if (janela && !janela.isMinimized() && janela.isVisible()) {
+  if (janela && !janela.isDestroyed() && !janela.isMinimized() && janela.isVisible()) {
     gravarEstado({ bounds: janela.getNormalBounds() });
   }
+}
+
+/* ---------------------------------------------------------- permissoes */
+
+function origemPermitida(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && HOSTS_PERMITIDOS.has(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function ligarPermissoes(ses) {
+  const LIBERADAS = new Set([
+    "notifications",
+    "media",
+    "clipboard-read",
+    "clipboard-sanitized-write",
+  ]);
+
+  ses.setPermissionRequestHandler((wc, permissao, aceitar, detalhes) => {
+    const origem = (detalhes && detalhes.requestingUrl) || (wc ? wc.getURL() : "");
+    aceitar(LIBERADAS.has(permissao) && origemPermitida(origem));
+  });
+
+  // Gemeo sincrono do handler acima. Sem ele o Chromium responde "granted" para
+  // qualquer origem, e enumerateDevices() entrega o nome do hardware sem que
+  // nenhuma permissao tenha sido concedida.
+  ses.setPermissionCheckHandler((wc, permissao, origem, detalhes) => {
+    const alvo = origem || (detalhes && detalhes.requestingUrl) || (wc ? wc.getURL() : "");
+    return LIBERADAS.has(permissao) && origemPermitida(alvo);
+  });
 }
 
 /* ----------------------------------------------------------- menu minimo */
 
 /**
- * Sem menu, o Chromium do Electron nao registra os atalhos de copiar e colar.
- * O menu fica escondido (autoHideMenuBar), so os aceleradores importam.
+ * Sem menu o Chromium nao registra os atalhos de copiar e colar. Fica escondido
+ * (autoHideMenuBar), so os aceleradores importam. O Ctrl+Q e a unica saida por
+ * teclado, entao vive aqui.
  */
 function montarMenu() {
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
+      {
+        label: "Arquivo",
+        submenu: [
+          { label: "Ocultar janela", accelerator: "CmdOrCtrl+W", click: () => janela && janela.hide() },
+          { type: "separator" },
+          { label: "Sair", accelerator: "CmdOrCtrl+Q", click: sair },
+        ],
+      },
       {
         label: "Editar",
         submenu: [
@@ -356,34 +514,39 @@ function montarMenu() {
 
 /* ----------------------------------------------------------------- boot */
 
-// Segunda execucao traz a janela existente em vez de subir outro processo.
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (janela) {
+    if (!janela || janela.isDestroyed()) montarJanela();
+    else {
       janela.show();
       janela.focus();
     }
   });
 
-  // No Wayland o Electron usa o nome do app como app_id da janela. Precisa ser
-  // igual ao StartupWMClass do .desktop, senao a janela cai na barra de tarefas
-  // sem icone e sem agrupar. O nome de exibicao fica no productName do build.
+  // No Wayland roda nativo em vez de XWayland, igual ao modo leve do projeto.
+  app.commandLine.appendSwitch("ozone-platform-hint", "auto");
+
+  // Em build empacotado o setName nao muda o caminho de dados (ja fixado acima),
+  // mas define o app_id da janela no Wayland, que precisa casar com o
+  // StartupWMClass do .desktop.
   app.setName("whatsapp-linux");
 
   app.whenReady().then(async () => {
     protegerPerfil();
     session.defaultSession.setUserAgent(USER_AGENT);
+    ligarPermissoes(session.defaultSession);
     montarMenu();
     montarJanela();
     montarBandeja();
     await oferecerIntegracao();
   });
 
-  // Sem isso o app encerraria ao esconder a unica janela.
+  // Sem isto o app encerraria ao esconder a unica janela.
   app.on("window-all-closed", (e) => {
-    if (!encerrando) e.preventDefault();
+    if (!encerrando && tray) e.preventDefault();
+    else app.quit();
   });
 
   app.on("before-quit", () => {
