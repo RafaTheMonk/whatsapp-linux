@@ -44,9 +44,20 @@ Os caminhos possíveis:
 | PWA instalado pelo próprio navegador | Bom. É o modo leve deste projeto, com perfil isolado por cima |
 | Wrapper pronto de terceiro (ZapZap, whatsapp-for-linux) | Bom, e tem bandeja. Custo: mais um projeto de terceiro na sua sessão |
 | Nativefier | Arquivado pelo autor, sem manutenção. Gera build Electron com Chromium velho, o WhatsApp Web reclama de navegador sem suporte. Não usar |
-| Electron escrito na mão | Funciona e dá controle total. Custo: ~200 MB de runtime só para embrulhar um site |
+| Electron escrito na mão | Funciona e dá controle total. Custo: um runtime inteiro só para embrulhar um site, e a manutenção fica com você |
 
-Este projeto não usa Electron em nenhum dos dois modos.
+A resposta muda conforme quem vai usar. Para a sua própria máquina, Electron é caro
+demais: o Chromium já está instalado, então embutir outro é pagar mais de 100 MB por
+nada. Foi por isso que os dois primeiros modos existem e não usam Electron.
+
+Para mandar o app a outra pessoa, a conta se inverte: você não sabe o que ela tem
+instalado, e o pacote precisa funcionar sozinho. Aí Electron é a escolha certa, e é
+o que a terceira forma faz. O que continua descartado é o **Nativefier**, que está
+arquivado e gera build presa a Chromium velho.
+
+Com isso vem uma obrigação: um wrapper é um navegador inteiro, e navegador parado
+acumula CVE. Quem distribui assume manter a versão em dia. Veja
+[Auditoria](#auditoria).
 
 ## As três formas
 
@@ -239,8 +250,9 @@ Alternativa pronta com bandeja: **ZapZap** (`paru -S zapzap` ou
 
 ## Segurança
 
-- O sandbox do motor continua ativo nos dois modos. Nenhuma flag do projeto o
-  enfraquece.
+- O sandbox do motor continua ativo nas três formas. Nenhuma flag do projeto o
+  enfraquece, e o `.deb` instala o `chrome-sandbox` com SUID justamente para o
+  sandbox seguir funcionando no Ubuntu 24.04.
 - Nenhum código de terceiro roda: o alvo é `https://web.whatsapp.com/`, o site
   oficial.
 - A criptografia ponta a ponta do WhatsApp não é afetada. O wrapper não fica no meio
