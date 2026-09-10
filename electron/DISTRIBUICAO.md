@@ -81,6 +81,15 @@ Ou rode sem instalar nada:
 **Erro de sandbox no Ubuntu 24.04:** use o `.deb` em vez do AppImage. Ele já vem
 preparado para essa versão.
 
+**Você tem o AppImageLauncher instalado:** ele intercepta o AppImage, move o arquivo
+de lugar e cria um atalho que roda o app com `--no-sandbox`, desligando uma camada
+de proteção. Prefira o `.deb`, ou o `tar.gz`:
+
+```bash
+tar -xzf whatsapp-linux-1.0.0.tar.gz -C ~/.local/lib/
+~/.local/lib/whatsapp-linux-1.0.0/whatsapp-linux
+```
+
 ## Privacidade
 
 O app abre o WhatsApp Web oficial, nada mais. A criptografia ponta a ponta das suas

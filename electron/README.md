@@ -20,7 +20,7 @@ Saída em `electron/dist/`:
 |---|---|---|
 | `WhatsAppLinux-1.0.0-x86_64.AppImage` | ~119 MB | qualquer distro, sem instalar |
 | `whatsapp-linux_1.0.0_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
-| `whatsapp-linux-1.0.0.tar.gz` | ~114 MB | descompactar e rodar |
+| `whatsapp-linux-1.0.0.tar.gz` | ~114 MB | descompactar e rodar, e a saída em distro sem `.deb` que tenha AppImageLauncher |
 
 Publicar uma versão: subir os três arquivos mais o `SHA256SUMS.txt` numa release
 com a tag `vX.Y.Z`, igual à `version` do `package.json`. É o que o app consulta.
@@ -114,6 +114,14 @@ sem userns utilizável, e repete o `update-alternatives` do original (o
 - No Ubuntu 24.04 o AppArmor bloqueia user namespace sem privilégio e o sandbox do
   Chromium falha. Use o `.deb`, que instala o `chrome-sandbox` com SUID e por isso
   não depende de user namespace. Não use `--no-sandbox`.
+
+**AppImageLauncher**, se estiver instalado na máquina de quem baixa, intercepta a
+execução de qualquer AppImage por `binfmt`, move o arquivo para `~/Applications`
+renomeado com um hash, e cria uma entrada de menu própria que acrescenta
+`--no-sandbox`. Ou seja: desliga uma camada de segurança do Chromium sem avisar
+ninguém, e volta a fazer isso a cada execução, independente de onde o arquivo
+esteja. Não há como o app impedir. Quem tem essa ferramenta deve usar o `.deb` ou
+o `tar.gz`.
 
 **deb** não tem nenhum desses problemas: instala, cria o atalho e configura o
 `chrome-sandbox` com SUID. É o caminho recomendado para Ubuntu e derivados.
