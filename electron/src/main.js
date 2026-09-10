@@ -15,6 +15,7 @@ const {
   Tray,
   dialog,
   nativeImage,
+  net,
   session,
   shell,
 } = require("electron");
@@ -23,6 +24,10 @@ const os = require("os");
 const path = require("path");
 
 const URL_ALVO = "https://web.whatsapp.com/";
+const REPO = "RafaTheMonk/whatsapp-linux";
+const API_RELEASE = `https://api.github.com/repos/${REPO}/releases/latest`;
+const PAGINA_RELEASES = `https://github.com/${REPO}/releases/latest`;
+const INTERVALO_CHECAGEM_MS = 24 * 60 * 60 * 1000;
 const HOSTS_PERMITIDOS = new Set(["web.whatsapp.com", "www.whatsapp.com", "whatsapp.com"]);
 // shell.openExternal entrega a URL ao handler do sistema. Sem lista fechada,
 // a pagina consegue disparar file://, smb://, vscode:// ou qualquer esquema
@@ -262,6 +267,56 @@ async function oferecerIntegracao() {
   }
 }
 
+/* --------------------------------------------------------- atualizacao */
+
+let versaoNova = null;
+
+/** Compara "1.2.10" com "1.3.0" sem trazer dependencia de semver. */
+function maisNova(remota, local) {
+  const a = String(remota).replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
+  const b = String(local).replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const x = a[i] || 0;
+    const y = b[i] || 0;
+    if (x !== y) return x > y;
+  }
+  return false;
+}
+
+/**
+ * Checa a ultima release publicada no GitHub, no maximo uma vez por dia.
+ *
+ * Nao baixa nem instala nada: so avisa e abre a pagina se o usuario pedir. E a
+ * unica requisicao que o app faz fora do WhatsApp, e pode ser desligada no menu
+ * da bandeja. Falha de rede e ausencia de release sao silenciosas de proposito:
+ * ninguem quer um popup de erro por causa de wifi ruim.
+ */
+async function checarAtualizacao({ forcado = false } = {}) {
+  const estado = lerEstado();
+  if (!forcado && estado.avisarAtualizacao === false) return;
+  if (!forcado && estado.ultimaChecagem && Date.now() - estado.ultimaChecagem < INTERVALO_CHECAGEM_MS) {
+    return;
+  }
+
+  try {
+    const r = await net.fetch(API_RELEASE, {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "whatsapp-linux" },
+    });
+    gravarEstado({ ultimaChecagem: Date.now() });
+    if (!r.ok) return; // 404 = nenhuma release publicada ainda
+    const dados = await r.json();
+    if (dados && dados.tag_name && maisNova(dados.tag_name, app.getVersion())) {
+      versaoNova = String(dados.tag_name).replace(/^v/, "");
+      if (tray) {
+        montarMenuBandeja();
+        tray.setToolTip(`WhatsApp Linux - versao ${versaoNova} disponivel`);
+      }
+    }
+  } catch (e) {
+    console.error("checagem de atualizacao falhou:", e.message);
+  }
+}
+
 /* -------------------------------------------------------------- bandeja */
 
 function atualizarNaoLidas(titulo) {
@@ -292,8 +347,25 @@ function montarBandeja() {
     return;
   }
   tray.setToolTip("WhatsApp Linux");
+  montarMenuBandeja();
+  tray.on("click", alternar);
+}
 
-  const menu = Menu.buildFromTemplate([
+function montarMenuBandeja() {
+  if (!tray) return;
+  const itens = [];
+
+  if (versaoNova) {
+    itens.push(
+      {
+        label: `Versao ${versaoNova} disponivel`,
+        click: () => externo(PAGINA_RELEASES),
+      },
+      { type: "separator" }
+    );
+  }
+
+  itens.push(
     { label: "Mostrar / ocultar", click: alternar },
     { label: "Recarregar", click: () => janela && janela.webContents.reload() },
     { type: "separator" },
@@ -305,12 +377,20 @@ function montarBandeja() {
         if (!definirAutostart(item.checked)) item.checked = autostartAtivo();
       },
     },
+    {
+      label: "Avisar sobre atualizacao",
+      type: "checkbox",
+      checked: lerEstado().avisarAtualizacao !== false,
+      click: (item) => {
+        gravarEstado({ avisarAtualizacao: item.checked });
+        if (item.checked) checarAtualizacao({ forcado: true });
+      },
+    },
     { type: "separator" },
-    { label: "Sair", click: sair },
-  ]);
+    { label: "Sair", click: sair }
+  );
 
-  tray.setContextMenu(menu);
-  tray.on("click", alternar);
+  tray.setContextMenu(Menu.buildFromTemplate(itens));
 }
 
 function alternar() {
@@ -541,6 +621,7 @@ if (!app.requestSingleInstanceLock()) {
     montarJanela();
     montarBandeja();
     await oferecerIntegracao();
+    checarAtualizacao();
   });
 
   // Sem isto o app encerraria ao esconder a unica janela.
