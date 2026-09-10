@@ -1,10 +1,33 @@
 # WhatsApp Web como app no Linux
 
-App standalone do WhatsApp Web para Linux, em dois modos. Janela própria, ícone no
-menu, notificações do sistema e, no modo tray, ícone na bandeja com fechar para
-segundo plano.
+App de desktop do WhatsApp para Linux, em três formas. Janela própria, ícone no
+menu, notificações do sistema e, nas duas formas com bandeja, fechar no X mantém o
+app rodando em segundo plano recebendo mensagem.
 
 Testado em CachyOS com KDE Plasma sobre Wayland. Deve funcionar em qualquer distro.
+
+## Baixar pronto
+
+**[Downloads da última versão](https://github.com/RafaTheMonk/whatsapp-linux/releases/latest)**
+
+| Sua distro | Arquivo |
+|---|---|
+| Ubuntu, Mint, Debian, Pop!_OS | `.deb` |
+| Fedora, Arch, openSUSE, Manjaro, outras | `.AppImage` |
+
+```bash
+# Debian e derivados
+sudo apt install ./whatsapp-linux_1.0.0_amd64.deb
+
+# AppImage
+chmod +x WhatsAppLinux-1.0.0-x86_64.AppImage
+./WhatsAppLinux-1.0.0-x86_64.AppImage
+```
+
+Confira o arquivo antes de rodar com `sha256sum -c SHA256SUMS.txt`, que vai junto na
+release. Só x86_64 por enquanto.
+
+Quem prefere rodar direto do código, sem pacote, veja [Instalação](#instalação).
 
 ## Por que isso existe
 
@@ -31,15 +54,16 @@ Este projeto não usa Electron em nenhum dos dois modos.
 |---|---|---|---|
 | Motor | Chromium já instalado, em `--app` | QtWebEngine, via PyQt6 | Chromium embutido |
 | Dependência nova | nenhuma | `python-pyqt6`, `python-pyqt6-webengine` | nenhuma, vai tudo dentro |
-| Ícone na bandeja | não | sim, com contador de não lidas | sim, com contador |
+| Ícone na bandeja | não | sim, com contador desenhado no ícone | sim, contador no tooltip |
 | Fechar no X | encerra o app | esconde para a bandeja | esconde para a bandeja |
 | Notificação com a janela fechada | não | sim | sim |
-| Peso em disco | 0 | ~26 MB de bindings | ~103 MB (AppImage) ou ~72 MB (deb) |
+| Peso em disco | 0 | ~26 MB de bindings | ~118 MB (AppImage) ou ~83 MB (deb) |
 | Para quem | você, nesta máquina | você, quer bandeja e economia | **distribuir para outras pessoas** |
 
 As duas primeiras são scripts que rodam da própria pasta do repositório. A terceira
 é um pacote pronto (`AppImage`, `.deb`, `tar.gz`) para mandar para alguém que só
-quer baixar e usar. Detalhes de build e distribuição em [`electron/README.md`](electron/README.md).
+quer baixar e usar, hoje com **Electron 44.3.0 (Chromium 152)**. Detalhes de build e
+distribuição em [`electron/README.md`](electron/README.md).
 
 O modo tray existe porque o WhatsApp Web não desconecta quando você fecha a janela.
 Fechar no X e ter que reabrir e esperar carregar de novo é desperdício: o normal é o
