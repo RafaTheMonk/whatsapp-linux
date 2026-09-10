@@ -352,6 +352,10 @@ Os outros três confirmados:
    porque testa user namespace como root. O pacote instalava e não abria,
    exatamente onde a documentação mandava usar o `.deb`.
 
+O relatório completo das duas auditorias, com os achados refutados, os que nunca
+receberam verificação e a lista do que ainda não foi corrigido, está em
+[`docs/auditorias.md`](docs/auditorias.md).
+
 Achou outra coisa? Abra uma issue.
 
 ## Licença
