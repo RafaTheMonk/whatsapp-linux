@@ -268,12 +268,16 @@ de cada dependência entra no pacote.
 
 ### O que o app não faz
 
-- Não tem servidor próprio, nem telemetria, nem analytics. A única origem carregada
+- Não tem servidor próprio, nem telemetria, nem analytics. A única página carregada
   é `web.whatsapp.com`.
+- Faz **uma** requisição fora do WhatsApp: `api.github.com`, no máximo uma vez por
+  dia, para ver se saiu versão nova. Não baixa nem instala nada sozinho, só avisa na
+  bandeja. Desliga no menu da bandeja, em "Avisar sobre atualização". O código está
+  em `checarAtualizacao()`, e o registro do que foi checado fica em `estado.json`.
 - Não fica no meio da conversa: a criptografia ponta a ponta do WhatsApp é entre o
   seu celular e o do contato. O app só desenha a janela.
-- Não checa atualização sozinho. O `electron-builder` embute um `app-update.yml` nos
-  pacotes, mas o código nunca chama o `autoUpdater`.
+- Não tem auto-update. O `publish` está desligado no build justamente para não
+  embutir um `app-update.yml` apontando para canal que o código não usa.
 - Não pede root em nenhum modo. O `.deb` instala em `/opt` como qualquer pacote.
 
 ### Auditoria interna

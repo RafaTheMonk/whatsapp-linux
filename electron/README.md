@@ -22,6 +22,13 @@ Saída em `electron/dist/`:
 | `whatsapp-linux_1.0.0_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
 | `whatsapp-linux-1.0.0.tar.gz` | ~114 MB | descompactar e rodar |
 
+Publicar uma versão: subir os três arquivos mais o `SHA256SUMS.txt` numa release
+com a tag `vX.Y.Z`, igual à `version` do `package.json`. É o que o app consulta.
+
+```bash
+gh release create v1.0.0 dist/*.AppImage dist/*.deb dist/*.tar.gz SHA256SUMS.txt
+```
+
 `dist/` e `node_modules/` estão no `.gitignore`. Os binários não vão para o
 repositório: publique em Releases ou num drive.
 
@@ -74,9 +81,15 @@ Foi corrigido antes de qualquer distribuição.
 Regra: **rebuild a cada release de segurança do Electron**, não a cada mudança de
 funcionalidade. Confira a linha suportada em https://endoflife.date/electron.
 
-O app não tem auto-update. O `publish` está desligado justamente para não embutir
-um `app-update.yml` apontando para um canal que não existe. Atualizar é baixar o
-pacote novo.
+O app não tem auto-update: não baixa nem instala nada sozinho. O que ele faz é
+consultar a última release publicada no GitHub, no máximo uma vez por dia, e, se
+houver versão mais nova, mostrar um item no menu da bandeja que abre a página de
+downloads. Falha de rede e ausência de release são silenciosas de propósito.
+
+É a única requisição que o app faz fora do WhatsApp, e o usuário desliga em
+"Avisar sobre atualização", no próprio menu da bandeja. O `publish` do
+electron-builder continua desligado, para não embutir um `app-update.yml` que o
+código não usa.
 
 ## O .deb e o sandbox
 
