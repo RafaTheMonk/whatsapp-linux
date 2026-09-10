@@ -17,8 +17,8 @@
     "dist:appimage": "electron-builder --linux AppImage"
   },
   "devDependencies": {
-    "electron": "^33.2.0",
-    "electron-builder": "^25.1.8"
+    "electron": "44.3.0",
+    "electron-builder": "25.1.8"
   },
   "build": {
     "appId": "com.rafaelbrito.whatsapplinux",
@@ -31,7 +31,8 @@
     "files": [
       "src/**/*",
       "build/icon.png",
-      "build/tray.png"
+      "build/tray.png",
+      "build/deb-after-install.sh"
     ],
     "linux": {
       "target": [
@@ -41,17 +42,15 @@
       ],
       "category": "Network;InstantMessaging",
       "icon": "build/icon.png",
-      "maintainer": "Rafael Brito",
+      "maintainer": "Rafael Brito <RafaTheMonk@users.noreply.github.com>",
       "synopsis": "WhatsApp Web como app de desktop",
       "description": "Janela propria, icone na bandeja e fechar para segundo plano. Nao exige navegador nem dependencia instalada na maquina.",
       "desktop": {
-        "entry": {
-          "Name": "WhatsApp Linux",
-          "GenericName": "Mensageiro",
-          "Keywords": "whatsapp;zap;mensagem;chat;",
-          "StartupWMClass": "whatsapp-linux",
-          "StartupNotify": "true"
-        }
+        "GenericName": "Mensageiro",
+        "Keywords": "whatsapp;zap;mensagem;chat;",
+        "StartupWMClass": "whatsapp-linux",
+        "StartupNotify": "true",
+        "SingleMainWindow": "true"
       }
     },
     "appImage": {
@@ -60,10 +59,20 @@
     "deb": {
       "artifactName": "whatsapp-linux_${version}_${arch}.deb",
       "depends": [
+        "libgtk-3-0",
         "libnotify4",
-        "libxtst6",
-        "libnss3"
-      ]
-    }
+        "libnss3",
+        "libasound2",
+        "libcups2",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0"
+      ],
+      "afterInstall": "build/deb-after-install.sh",
+      "priority": "optional",
+      "packageCategory": "net"
+    },
+    "publish": null
   }
 }
