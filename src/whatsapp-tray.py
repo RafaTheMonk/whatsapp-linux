@@ -34,7 +34,7 @@ _flags = os.environ.get("WHATSAPP_QTWEBENGINE_FLAGS", _FLAGS_PADRAO)
 _anterior = os.environ.get("QTWEBENGINE_CHROMIUM_FLAGS", "")
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = f"{_anterior} {_flags}".strip()
 
-from PyQt6.QtCore import QSettings, QSize, Qt, QTimer, QUrl, pyqtSlot
+from PyQt6.QtCore import QEvent, QSettings, QSize, Qt, QTimer, QUrl, pyqtSlot
 from PyQt6.QtGui import QAction, QColor, QGuiApplication, QIcon, QPainter, QPixmap
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 from PyQt6.QtWebEngineCore import (
@@ -63,6 +63,13 @@ PROFILE_DIR = DATA_DIR / "qt-profile"
 CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "whatsapp-web"
 
 ALLOWED_HOSTS = {"web.whatsapp.com", "www.whatsapp.com", "whatsapp.com"}
+
+TAMANHO_PADRAO = QSize(1100, 780)
+_FORA_DO_NORMAL = (
+    Qt.WindowState.WindowMaximized
+    | Qt.WindowState.WindowFullScreen
+    | Qt.WindowState.WindowMinimized
+)
 
 
 def load_icon() -> QIcon:
@@ -127,6 +134,7 @@ class Janela(QMainWindow):
         self.icone_base = icone
         self.encerrando = False
         self.nao_lidas = 0
+        self.tamanho_normal = QSize(TAMANHO_PADRAO)
 
         self.setWindowTitle(APP_NAME)
         self.setWindowIcon(icone)
@@ -212,16 +220,6 @@ class Janela(QMainWindow):
     def aparecer(self) -> None:
         # Nao usar showNormal(): ele tira o maximizado de quem volta da bandeja
         # e deixa a janela no tamanho da tela como se fosse o tamanho normal.
-        #
-        # No Wayland o hide() destroi a superficie e o show() cria outra. Se ela
-        # nasce maximizada, o Qt nao registra o tamanho normal e restaurar
-        # devolve o tamanho da tela: o botao de maximizar para de ter efeito.
-        # Reaplicar o tamanho normal antes do show() resolve. Medido no KDE
-        # Plasma sobre Wayland, Qt 6.11.
-        if self.isHidden():
-            normal = self.normalGeometry().size()
-            if not normal.isEmpty():
-                self.resize(normal)
         self.setWindowState(self.windowState() & ~Qt.WindowState.WindowMinimized)
         self.show()
         self.raise_()
@@ -251,28 +249,65 @@ class Janela(QMainWindow):
         QApplication.instance().quit()
 
     def _restaurar_geometria(self) -> None:
-        geo = QSettings("whatsapp-web", "tray").value("geometria")
+        cfg = QSettings("whatsapp-web", "tray")
+        geo = cfg.value("geometria")
         if geo is None:
-            self.resize(1100, 780)
+            self.resize(TAMANHO_PADRAO)
             return
         self.restoreGeometry(geo)
-        # Versao anterior gravava o tamanho da tela como tamanho normal (ver
-        # aparecer). Com isso salvo, maximizar e restaurar nao mudam nada. Abre
-        # maximizada com um tamanho normal de verdade por baixo. A folga existe
-        # porque no Wayland o Qt nao desconta o painel da tela e o restore
-        # devolve alguns pixels a menos (1918x1022 numa tela 1920x1080).
+        normal = cfg.value("tamanho_normal", QSize(), type=QSize)
+        if normal.isEmpty():
+            normal = self.normalGeometry().size()
+        # Versao anterior gravava o tamanho da tela como tamanho normal. Com isso
+        # salvo, maximizar e restaurar nao mudam nada. Abre maximizada com um
+        # tamanho normal de verdade por baixo. A folga existe porque no Wayland
+        # o Qt nao desconta o painel da tela e o restore devolve alguns pixels a
+        # menos (1918x1022 numa tela 1920x1080).
         tela = self.screen().availableGeometry()
-        if (
-            not self.isMaximized()
-            and self.width() >= tela.width() * 0.9
-            and self.height() >= tela.height() * 0.9
-        ):
-            self.resize(1100, 780)
+        if normal.width() >= tela.width() * 0.9 and normal.height() >= tela.height() * 0.9:
+            normal = QSize(TAMANHO_PADRAO)
+            self.resize(normal)
             self.setWindowState(Qt.WindowState.WindowMaximized)
+        self.tamanho_normal = normal
 
     def _salvar_geometria(self) -> None:
         if not self.isMinimized():
-            QSettings("whatsapp-web", "tray").setValue("geometria", self.saveGeometry())
+            cfg = QSettings("whatsapp-web", "tray")
+            cfg.setValue("geometria", self.saveGeometry())
+            cfg.setValue("tamanho_normal", self.tamanho_normal)
+
+    # No Wayland o hide() destroi a superficie e o show() cria outra. Quando o
+    # KWin desmaximiza essa superficie nova, o Qt fica no tamanho da tela e o
+    # botao de restaurar nao muda nada. O tamanho normal e guardado aqui e
+    # reaplicado a mao. Medido no KDE Plasma sobre Wayland com Qt 6.11,
+    # maximizando e restaurando pelo KWin, que e o caminho do botao da barra de
+    # titulo. Chamar showNormal() pelo codigo segue outro caminho e nao serve
+    # de teste.
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        # O Qt entrega o tamanho novo antes de avisar que maximizou. Anotar na
+        # volta do loop, quando o estado ja e o final.
+        QTimer.singleShot(0, self._anotar_tamanho_normal)
+
+    def _anotar_tamanho_normal(self) -> None:
+        if self.isVisible() and not self.windowState() & _FORA_DO_NORMAL:
+            self.tamanho_normal = self.size()
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() != QEvent.Type.WindowStateChange:
+            return
+        saiu_do_maximizado = event.oldState() & Qt.WindowState.WindowMaximized
+        if saiu_do_maximizado and not self.windowState() & _FORA_DO_NORMAL:
+            # Copia agora: a anotacao pendente do resize ja pode estar na fila
+            # com o tamanho da tela.
+            self._restaurar_para = QSize(self.tamanho_normal)
+            QTimer.singleShot(0, self._reaplicar_tamanho_normal)
+
+    def _reaplicar_tamanho_normal(self) -> None:
+        if not self.windowState() & _FORA_DO_NORMAL:
+            self.resize(self._restaurar_para)
 
     # ---- integracao ----------------------------------------------------
 
