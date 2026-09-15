@@ -1,7 +1,7 @@
 {
   "name": "whatsapp-linux",
   "productName": "WhatsApp Linux",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "WhatsApp Web como app de desktop no Linux, com bandeja e fechar para segundo plano",
   "homepage": "https://github.com/RafaTheMonk/whatsapp-linux",
   "repository": {

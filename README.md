@@ -17,11 +17,11 @@ Testado em CachyOS com KDE Plasma sobre Wayland. Deve funcionar em qualquer dist
 
 ```bash
 # Debian e derivados
-sudo apt install ./whatsapp-linux_1.0.0_amd64.deb
+sudo apt install ./whatsapp-linux_1.0.1_amd64.deb
 
 # AppImage
-chmod +x WhatsAppLinux-1.0.0-x86_64.AppImage
-./WhatsAppLinux-1.0.0-x86_64.AppImage
+chmod +x WhatsAppLinux-1.0.1-x86_64.AppImage
+./WhatsAppLinux-1.0.1-x86_64.AppImage
 ```
 
 Confira o arquivo antes de rodar com `sha256sum -c SHA256SUMS.txt`, que vai junto na
