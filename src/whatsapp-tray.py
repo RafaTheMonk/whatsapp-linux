@@ -210,7 +210,20 @@ class Janela(QMainWindow):
             self.aparecer()
 
     def aparecer(self) -> None:
-        self.showNormal()
+        # Nao usar showNormal(): ele tira o maximizado de quem volta da bandeja
+        # e deixa a janela no tamanho da tela como se fosse o tamanho normal.
+        #
+        # No Wayland o hide() destroi a superficie e o show() cria outra. Se ela
+        # nasce maximizada, o Qt nao registra o tamanho normal e restaurar
+        # devolve o tamanho da tela: o botao de maximizar para de ter efeito.
+        # Reaplicar o tamanho normal antes do show() resolve. Medido no KDE
+        # Plasma sobre Wayland, Qt 6.11.
+        if self.isHidden():
+            normal = self.normalGeometry().size()
+            if not normal.isEmpty():
+                self.resize(normal)
+        self.setWindowState(self.windowState() & ~Qt.WindowState.WindowMinimized)
+        self.show()
         self.raise_()
         self.activateWindow()
         self.acao_mostrar.setText("Ocultar")
