@@ -26,8 +26,12 @@ Publicar uma versão: subir os três arquivos mais o `SHA256SUMS.txt` numa relea
 com a tag `vX.Y.Z`, igual à `version` do `package.json`. É o que o app consulta.
 
 ```bash
-gh release create v1.0.1 dist/*.AppImage dist/*.deb dist/*.tar.gz SHA256SUMS.txt
+cd dist && sha256sum *1.0.1* > ../SHA256SUMS.txt && cd ..
+gh release create v1.0.1 dist/*1.0.1* SHA256SUMS.txt
 ```
+
+Filtre pela versão: o `dist/` guarda os builds anteriores, e um `dist/*.AppImage`
+sobe todos eles na mesma release.
 
 `dist/` e `node_modules/` estão no `.gitignore`. Os binários não vão para o
 repositório: publique em Releases ou num drive.
