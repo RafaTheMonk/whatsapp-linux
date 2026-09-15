@@ -252,10 +252,23 @@ class Janela(QMainWindow):
 
     def _restaurar_geometria(self) -> None:
         geo = QSettings("whatsapp-web", "tray").value("geometria")
-        if geo is not None:
-            self.restoreGeometry(geo)
-        else:
+        if geo is None:
             self.resize(1100, 780)
+            return
+        self.restoreGeometry(geo)
+        # Versao anterior gravava o tamanho da tela como tamanho normal (ver
+        # aparecer). Com isso salvo, maximizar e restaurar nao mudam nada. Abre
+        # maximizada com um tamanho normal de verdade por baixo. A folga existe
+        # porque no Wayland o Qt nao desconta o painel da tela e o restore
+        # devolve alguns pixels a menos (1918x1022 numa tela 1920x1080).
+        tela = self.screen().availableGeometry()
+        if (
+            not self.isMaximized()
+            and self.width() >= tela.width() * 0.9
+            and self.height() >= tela.height() * 0.9
+        ):
+            self.resize(1100, 780)
+            self.setWindowState(Qt.WindowState.WindowMaximized)
 
     def _salvar_geometria(self) -> None:
         if not self.isMinimized():
