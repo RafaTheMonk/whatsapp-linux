@@ -52,6 +52,14 @@ O código está aberto em https://github.com/RafaTheMonk/whatsapp-linux
 Abra o app e escaneie o QR code com o celular, em WhatsApp > Dispositivos
 conectados > Conectar dispositivo. Só precisa fazer isso uma vez.
 
+## Economizar memória
+
+O app ocupa perto de 800 MB de RAM, a maior parte o próprio WhatsApp Web. Se for
+passar um tempo sem precisar dele, use "Suspender" no menu do ícone da bandeja: o
+consumo cai para uns 400 MB e o ícone fica cinza. Enquanto estiver suspenso, **não
+chegam mensagens nem notificações**. Para voltar, clique no ícone; o WhatsApp
+recarrega sem pedir o QR code de novo.
+
 ## Atualização
 
 O app não se atualiza sozinho e não instala nada por conta própria. Uma vez por

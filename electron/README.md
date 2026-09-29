@@ -54,6 +54,12 @@ repositório: publique em Releases ou num drive.
   (`src/preload.js`) deixa o evento passar nesses dois casos, sem expor nada à página.
 - Instância única: abrir de novo traz a janela existente.
 - "Iniciar com o sistema" no menu da bandeja.
+- "Suspender" no menu da bandeja fecha a página do WhatsApp e libera a memória dela:
+  medido em 29/09/2026, o app caiu de ~840 MB para ~400 MB. O ícone fica cinza e,
+  enquanto suspenso, **não chegam mensagens nem notificações**. Clicar no ícone
+  recarrega o WhatsApp, com o login salvo. Nunca suspende sozinho. Os ~400 MB que
+  sobram são o próprio Electron (processo principal, GPU, rede) e o service worker
+  do WhatsApp, que o Electron não tem como parar.
 - Primeira execução do AppImage oferece criar o atalho no menu de aplicativos.
 
 ## Onde ficam os dados
