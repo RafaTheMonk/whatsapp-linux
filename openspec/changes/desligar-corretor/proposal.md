@@ -20,6 +20,6 @@ Com `spellcheck: true`, o Chromium do app baixa o dicionário pt-BR (3,9 MB) de 
 
 ## Impact
 
-- `electron/src/main.js`: `spellcheck: false` e remoção do bloco do corretor em `menuDeContexto`.
+- `electron/src/main.js`: `spellcheck: false` na janela, corretor desligado e lista de idiomas vazia na sessão, e remoção do bloco do corretor em `menuDeContexto`. Medido em 29/09/2026 com perfil vazio: só `spellcheck: false`, ou ele somado a `setSpellCheckerEnabled(false)`, ainda baixa o dicionário, porque a sessão baixa um por idioma da lista. Com a lista vazia, nada é baixado.
 - `electron/README.md`, `electron/DISTRIBUICAO.md` (Privacidade) e a pendência em `docs/auditorias.md`.
 - Quem já usa fica com o arquivo `~/.config/whatsapp-linux/Dictionaries/pt-BR-3-0.bdic` sobrando. O app não apaga nada no perfil do usuário.

@@ -11,7 +11,7 @@ Por conta própria, o app SHALL acessar apenas os hosts do WhatsApp e a API de r
 
 #### Scenario: Primeira execução em perfil novo
 - **WHEN** o app roda pela primeira vez, sem nada em `~/.config/whatsapp-linux`
-- **THEN** nenhum dicionário é baixado e a pasta `Dictionaries` não é criada
+- **THEN** nenhum dicionário é baixado: a pasta `Dictionaries` fica vazia
 
 ### Requirement: Sem corretor ortográfico
 A caixa de digitar MUST NOT sublinhar palavras, e o menu de contexto MUST NOT oferecer sugestões de correção nem "Adicionar ao dicionário".
