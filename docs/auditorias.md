@@ -388,9 +388,9 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
   `--user-data-dir`.
 - **`--class` e `--name` continuam no comando do modo leve** sem servir para nada
   no Wayland. Funcionam só em X11. Não quebram, mas confundem quem lê.
-- **`scripts/autostart.sh` copia o `.desktop`**, então uma correção posterior feita
-  pelo `detect-app-id.sh` não chega na cópia. Symlink resolveria, mas o modo tray
-  precisa acrescentar `--hidden` à linha `Exec`, o que impede o symlink.
+- ~~**`scripts/autostart.sh` copia o `.desktop`**~~, e a correção do
+  `detect-app-id.sh` não chegava na cópia. Resolvido em 29/09/2026: o script corrige
+  menu e autostart.
 - **`os_crypt` pode cair para chave fixa no autostart**, se o app subir antes do
   kwallet abrir. A sessão fica cifrada com chave previsível em vez da do chaveiro.
 - **Perfil novo do Brave nasce com a telemetria padrão ligada**, mesmo com ela
