@@ -371,9 +371,9 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
   (`electron/scripts/gerar-icones-bandeja.py`).
 - ~~**`spellcheck: true` baixa dicionário de servidor do Google.**~~ Resolvido em
   29/09/2026: corretor desligado na janela e na sessão, com a lista de idiomas vazia.
-- **Geometria restaurada sem conferir se ainda cabe.** Se a janela foi fechada num
-  monitor que não existe mais, ela reabre fora da tela. Comparar com
-  `screen.getDisplayMatching(bounds)` antes de aplicar.
+- ~~**Geometria restaurada sem conferir se ainda cabe.**~~ Resolvido em 29/09/2026:
+  os limites salvos são conferidos contra a área útil dos monitores, e a janela
+  reabre maximizada quando foi fechada assim.
 - **`tar.gz` não traz `.desktop` nem ícone**, mas a documentação o oferece como
   "descompactar e rodar". Ou gerar um instalador junto, ou dizer que ele é para
   quem sabe o que está fazendo.
