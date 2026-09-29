@@ -1,0 +1,105 @@
+# Gera os pacotes do app Electron numa maquina limpa.
+#
+# Tag vX.Y.Z: confere a versao, gera AppImage, deb e tar.gz, atesta a procedencia
+# e cria a release como RASCUNHO. Publicar e passo humano: o app avisa todo mundo
+# da ultima release publicada em ate um dia.
+#
+# Disparo manual: mesmo build, pacotes so como artefato, sem release.
+#
+# Acoes fixadas por SHA de commit (tag de acao pode ser movida). A versao fica no
+# comentario, para quem for atualizar.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pacotes:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write      # criar a release em rascunho
+      id-token: write      # assinar a atestacao
+      attestations: write
+    defaults:
+      run:
+        working-directory: electron
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: electron/package-lock.json
+
+      - name: Tag bate com a versao do package.json
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          versao="v$(node -p 'require("./package.json").version')"
+          if [ "$TAG" != "$versao" ]; then
+            echo "::error::tag $TAG diferente da versao do package.json ($versao)"
+            exit 1
+          fi
+
+      - name: Dependencias exatas do package-lock.json
+        run: |
+          npm ci
+          # O npm 11 bloqueia o postinstall do Electron; rodar de novo e inofensivo.
+          node node_modules/electron/install.js
+
+      - name: Gerar AppImage, deb e tar.gz
+        run: npm run dist
+
+      - name: Checksums
+        run: |
+          versao="$(node -p 'require("./package.json").version')"
+          cd dist
+          sha256sum *"$versao"*.AppImage *"$versao"*.deb *"$versao"*.tar.gz > ../SHA256SUMS.txt
+          cat ../SHA256SUMS.txt
+
+      - name: Artefato do disparo manual
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pacotes
+          path: |
+            electron/dist/*.AppImage
+            electron/dist/*.deb
+            electron/dist/*.tar.gz
+            electron/SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Atestar procedencia
+        if: github.event_name == 'push'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            electron/dist/*.AppImage
+            electron/dist/*.deb
+            electron/dist/*.tar.gz
+
+      - name: Release em rascunho
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          versao="${TAG#v}"
+          # Notas escritas a mao, se existirem; senao o GitHub gera pelos commits.
+          if [ -f "notas/$TAG.md" ]; then
+            notas=(--notes-file "notas/$TAG.md")
+          else
+            notas=(--generate-notes)
+          fi
+          gh release create "$TAG" --draft --title "$TAG" "${notas[@]}" \
+            dist/*"$versao"*.AppImage dist/*"$versao"*.deb dist/*"$versao"*.tar.gz \
+            SHA256SUMS.txt
