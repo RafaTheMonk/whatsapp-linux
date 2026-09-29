@@ -73,6 +73,10 @@ let tray = null;
 let encerrando = false;
 let naoLidas = 0;
 let rotuloNaBandeja = "";
+// Pagina fechada para liberar memoria; o icone fica na bandeja ate o usuario voltar.
+let suspenso = false;
+// A proxima janela criada aparece mesmo que o app tenha subido com --hidden.
+let mostrarAoCriar = false;
 
 const comecarOculto = process.argv.includes("--hidden") || process.argv.includes("--oculto");
 
@@ -332,7 +336,7 @@ function atualizarNaoLidas(titulo) {
   if (n === naoLidas) return;
   naoLidas = n;
   if (tray) {
-    tray.setToolTip(n ? `WhatsApp Linux - ${n} nao lidas` : "WhatsApp Linux");
+    tray.setToolTip(textoTooltip());
     desenharContador();
   }
   // Só funciona em ambiente com Unity launcher; no KDE devolve false.
@@ -344,8 +348,13 @@ function atualizarNaoLidas(titulo) {
 }
 
 /** Troca o icone da bandeja so quando o rotulo muda: 12 e 15 dao o mesmo "9+". */
+function textoTooltip() {
+  if (suspenso) return "WhatsApp Linux - suspenso, sem receber mensagens";
+  return naoLidas ? `WhatsApp Linux - ${naoLidas} nao lidas` : "WhatsApp Linux";
+}
+
 function desenharContador() {
-  const rotulo = naoLidas > 9 ? "9+" : naoLidas > 0 ? String(naoLidas) : "";
+  const rotulo = suspenso ? "suspenso" : naoLidas > 9 ? "9+" : naoLidas > 0 ? String(naoLidas) : "";
   if (!tray || rotulo === rotuloNaBandeja) return;
   try {
     tray.setImage(nativeImage.createFromPath(iconeTrayCom(rotulo)));
@@ -365,7 +374,7 @@ function montarBandeja() {
     tray = null;
     return;
   }
-  tray.setToolTip(naoLidas ? `WhatsApp Linux - ${naoLidas} nao lidas` : "WhatsApp Linux");
+  tray.setToolTip(textoTooltip());
   // O titulo pode ter chegado antes da bandeja existir.
   desenharContador();
   montarMenuBandeja();
@@ -388,7 +397,12 @@ function montarMenuBandeja() {
 
   itens.push(
     { label: "Mostrar / ocultar", click: alternar },
-    { label: "Recarregar", click: () => janela && janela.webContents.reload() },
+    { label: "Recarregar", enabled: !suspenso, click: () => janela && janela.webContents.reload() },
+    {
+      label: "Suspender (libera memoria, para de receber mensagens)",
+      enabled: !suspenso,
+      click: suspender,
+    },
     { type: "separator" },
     {
       label: "Iniciar com o sistema",
@@ -414,9 +428,41 @@ function montarMenuBandeja() {
   tray.setContextMenu(Menu.buildFromTemplate(itens));
 }
 
+/**
+ * Fecha a pagina do WhatsApp e devolve a memoria dela, mantendo so a bandeja.
+ * destroy em vez de congelar a pagina: congelada, a memoria continua ocupada.
+ * Voltar e o caminho de janela inexistente em alternar e second-instance.
+ */
+function suspender() {
+  if (!janela || janela.isDestroyed()) return;
+  salvarBounds();
+  suspenso = true;
+  naoLidas = 0;
+  janela.destroy();
+  if (tray) {
+    tray.setToolTip(textoTooltip());
+    desenharContador();
+    montarMenuBandeja();
+  }
+}
+
+/** Recria a janela depois de suspender ou fechar, sempre visivel. */
+function recriarJanela() {
+  mostrarAoCriar = true;
+  montarJanela();
+  if (suspenso) {
+    suspenso = false;
+    if (tray) {
+      tray.setToolTip(textoTooltip());
+      desenharContador();
+      montarMenuBandeja();
+    }
+  }
+}
+
 function alternar() {
   if (!janela || janela.isDestroyed()) {
-    montarJanela();
+    recriarJanela();
     return;
   }
   if (janela.isVisible() && !janela.isMinimized()) {
@@ -528,7 +574,8 @@ function montarJanela() {
 
   janela.loadURL(URL_ALVO, { userAgent: USER_AGENT });
   janela.once("ready-to-show", () => {
-    if (!comecarOculto) janela.show();
+    if (!comecarOculto || mostrarAoCriar) janela.show();
+    mostrarAoCriar = false;
   });
 }
 
@@ -682,7 +729,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (!janela || janela.isDestroyed()) montarJanela();
+    if (!janela || janela.isDestroyed()) recriarJanela();
     else {
       janela.show();
       janela.focus();
