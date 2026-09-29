@@ -386,8 +386,9 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
 - **Navegador em Flatpak ou Snap não é detectado** pelo modo leve, que só procura
   binário no `PATH`. E mesmo apontando na mão, o sandbox do Flatpak bloquearia o
   `--user-data-dir`.
-- **`--class` e `--name` continuam no comando do modo leve** sem servir para nada
-  no Wayland. Funcionam só em X11. Não quebram, mas confundem quem lê.
+- ~~**`--class` e `--name` continuam no comando do modo leve**~~ sem efeito no
+  Wayland. Resolvido em 29/09/2026: ficam, porque valem no X11, com comentário
+  explicando.
 - ~~**`scripts/autostart.sh` copia o `.desktop`**~~, e a correção do
   `detect-app-id.sh` não chegava na cópia. Resolvido em 29/09/2026: o script corrige
   menu e autostart.
