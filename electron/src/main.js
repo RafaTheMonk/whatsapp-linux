@@ -569,10 +569,11 @@ function montarJanela() {
 
   wc.on("context-menu", (e, params) => menuDeContexto(wc, params));
 
-  wc.on("page-title-updated", (e, titulo) => {
-    e.preventDefault();
-    atualizarNaoLidas(titulo);
-  });
+  // O contador le o titulo do webContents; quem segura o titulo da janela e o
+  // evento da BrowserWindow. preventDefault no webContents nao impede nada, e o
+  // KWin mostrava "(3) WhatsApp" (medido em 11/09 e 29/09/2026).
+  wc.on("page-title-updated", (e, titulo) => atualizarNaoLidas(titulo));
+  janela.on("page-title-updated", (e) => e.preventDefault());
 
   // Sem isto, uma queda do renderer deixa a janela branca para sempre.
   wc.on("render-process-gone", (e, detalhes) => {
@@ -754,9 +755,10 @@ if (!app.requestSingleInstanceLock()) {
   // No Wayland roda nativo em vez de XWayland, igual ao modo leve do projeto.
   app.commandLine.appendSwitch("ozone-platform-hint", "auto");
 
-  // Em build empacotado o setName nao muda o caminho de dados (ja fixado acima),
-  // mas define o app_id da janela no Wayland, que precisa casar com o
-  // StartupWMClass do .desktop.
+  // Nao define o app_id no Wayland (medido em 11/09/2026): no pacote ele vem do
+  // executableName e no npm start do name do package.json, os dois
+  // "whatsapp-linux", igual ao StartupWMClass do .desktop. Fica so para
+  // app.getName() devolver o mesmo nome do resto do projeto.
   app.setName("whatsapp-linux");
 
   app.whenReady().then(async () => {
