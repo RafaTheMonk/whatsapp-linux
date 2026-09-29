@@ -366,11 +366,9 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
 
 ### App Electron
 
-- **Contador de não lidas só aparece no tooltip.** O `iconeComBadge` foi removido
-  na reescrita e nada é desenhado sobre o ícone da bandeja. `app.setBadgeCount`
-  devolve `false` no KDE. Para resolver de verdade: compor o número com
-  `nativeImage` a partir de um buffer, ou trocar o ícone por variantes pré-geradas
-  de 1 a 9 e "9+".
+- ~~**Contador de não lidas só aparece no tooltip.**~~ Resolvido em 29/09/2026: o
+  número é desenhado sobre o ícone da bandeja com ícones pré-gerados
+  (`electron/scripts/gerar-icones-bandeja.py`).
 - **`spellcheck: true` baixa dicionário de servidor do Google.** Contradiz o que o
   `DISTRIBUICAO.md` promete sobre não acessar nada além do WhatsApp e da checagem
   de versão. Decidir: desligar, ou declarar na documentação.

@@ -40,7 +40,10 @@ repositório: publique em Releases ou num drive.
 
 - Fecha para a bandeja no X, em vez de encerrar. A sessão continua conectada e as
   notificações continuam chegando.
-- Contador de não lidas lido do título da página, no tooltip da bandeja e no badge.
+- Contador de não lidas lido do título da página, desenhado sobre o ícone da bandeja
+  (1 a 9 e "9+"), no tooltip e no badge. É o número do próprio WhatsApp, que conta
+  conversas com mensagem não lida, não mensagens. Os ícones com número saem de
+  `scripts/gerar-icones-bandeja.py`.
 - User agent de Chrome puro. O WhatsApp Web recusa quem se anuncia como Electron.
 - Permissões por lista fechada (notificação, mídia, área de transferência) e só
   para hosts do WhatsApp.
