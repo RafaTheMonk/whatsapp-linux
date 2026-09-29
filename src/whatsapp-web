@@ -35,6 +35,19 @@ if [ -z "$BROWSER" ]; then
     exit 1
 fi
 
+# Perfil novo do Brave nasce com telemetria ligada, mesmo que o perfil principal
+# a tenha desligado: sao independentes. So na criacao; perfil existente fica como
+# o usuario deixou. Nomes das chaves conferidos num perfil com tudo desligado.
+case "$(basename "$BROWSER")" in
+    brave*)
+        if [ ! -e "$PROFILE/Local State" ]; then
+            printf '%s\n' '{"brave":{"p3a":{"enabled":false,"notice_acknowledged":true},"stats":{"reporting_enabled":false}},"user_experience_metrics":{"reporting_enabled":false}}' \
+                > "$PROFILE/Local State"
+            chmod 600 "$PROFILE/Local State" 2>/dev/null || true
+        fi
+        ;;
+esac
+
 # --class e --name so valem no X11. No Wayland o Chromium ignora os dois e o
 # app_id sai do proprio navegador (ver scripts/detect-app-id.sh). Ficam para
 # quem roda em X11, onde agrupam a janela com o lancador.
