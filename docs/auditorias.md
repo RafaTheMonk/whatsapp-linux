@@ -386,6 +386,8 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
 - **Navegador em Flatpak ou Snap não é detectado** pelo modo leve, que só procura
   binário no `PATH`. E mesmo apontando na mão, o sandbox do Flatpak bloquearia o
   `--user-data-dir`.
+  Mantido só documentado (decisão de 29/09/2026): sem navegador em Flatpak ou Snap
+  na máquina de teste, o suporte seria escrito sem teste.
 - ~~**`--class` e `--name` continuam no comando do modo leve**~~ sem efeito no
   Wayland. Resolvido em 29/09/2026: ficam, porque valem no X11, com comentário
   explicando.
