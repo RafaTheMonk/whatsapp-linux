@@ -17,6 +17,7 @@ const {
   dialog,
   nativeImage,
   net,
+  screen,
   session,
   shell,
 } = require("electron");
@@ -502,8 +503,28 @@ function ehDoWhatsApp(url) {
   }
 }
 
+/**
+ * Limites salvos so valem se ainda cairem num monitor conectado. Fechada num
+ * monitor externo que sumiu, a janela reabriria fora da tela (no X11; no
+ * Wayland o compositor ignora a posicao pedida). 100x100 visiveis bastam para
+ * achar a barra de titulo.
+ */
+function boundsQueCabem(b) {
+  const padrao = { width: 1100, height: 780 };
+  if (!b || !(b.width > 0) || !(b.height > 0)) return padrao;
+  const visivel = (area) =>
+    Math.min(b.x + b.width, area.x + area.width) - Math.max(b.x, area.x) >= 100 &&
+    Math.min(b.y + b.height, area.y + area.height) - Math.max(b.y, area.y) >= 100;
+  if (Number.isFinite(b.x) && Number.isFinite(b.y) && screen.getAllDisplays().some((d) => visivel(d.workArea))) {
+    return b;
+  }
+  const area = screen.getPrimaryDisplay().workArea;
+  return { width: Math.min(b.width, area.width), height: Math.min(b.height, area.height) };
+}
+
 function montarJanela() {
-  const bounds = lerEstado().bounds || { width: 1100, height: 780 };
+  const estado = lerEstado();
+  const bounds = boundsQueCabem(estado.bounds);
 
   janela = new BrowserWindow({
     ...bounds,
@@ -575,6 +596,10 @@ function montarJanela() {
   });
 
   janela.loadURL(URL_ALVO, { userAgent: USER_AGENT });
+  // Na primeira vez que aparece, nao na criacao: maximize() tambem mostra a
+  // janela, e quebraria o --hidden do autostart. O tamanho normal fica por
+  // baixo para o botao de restaurar.
+  if (estado.maximizada) janela.once("show", () => janela.maximize());
   janela.once("ready-to-show", () => {
     if (!comecarOculto || mostrarAoCriar) janela.show();
     mostrarAoCriar = false;
@@ -630,7 +655,8 @@ function menuDeContexto(wc, p) {
 
 function salvarBounds() {
   if (janela && !janela.isDestroyed() && !janela.isMinimized() && janela.isVisible()) {
-    gravarEstado({ bounds: janela.getNormalBounds() });
+    // getNormalBounds devolve o tamanho de antes de maximizar, mesmo maximizada.
+    gravarEstado({ bounds: janela.getNormalBounds(), maximizada: janela.isMaximized() });
   }
 }
 
