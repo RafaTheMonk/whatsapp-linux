@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Gera os icones da bandeja com o contador de nao lidas.
+"""Gera os icones derivados do build/icon.png.
+
+Icones do app em build/icons/NxN.png, que o electron-builder instala no tema
+hicolor e que a criacao de atalho copia. E os icones da bandeja com o contador
+de nao lidas.
 
 O processo principal do Electron nao tem canvas nem fonte, entao os icones com
 numero saem prontos daqui e vao versionados em build/. Mesmo visual do modo
@@ -9,7 +13,7 @@ branco em negrito, "9+" acima de 9. Tambem gera o icone cinza do app suspenso.
 So precisa rodar para mudar os icones. Requer Pillow (pacote python-pillow no
 Arch, python3-pil no Debian); quem roda o app nao precisa de nada disso.
 
-    python3 electron/scripts/gerar-icones-bandeja.py
+    python3 electron/scripts/gerar-icones.py
 """
 
 from pathlib import Path
@@ -19,6 +23,8 @@ from PIL import Image, ImageDraw, ImageFont
 BUILD = Path(__file__).resolve().parent.parent / "build"
 VERMELHO = (229, 57, 53, 255)  # #e53935, o mesmo do modo tray
 ROTULOS = [str(n) for n in range(1, 10)] + ["9+"]
+# Tamanhos que painel, menu e barra de tarefas pedem ao tema de icones.
+TAMANHOS_APP = (16, 24, 32, 48, 64, 128, 256, 512)
 
 
 def base(tamanho: int) -> Image.Image:
@@ -58,7 +64,17 @@ def nome(rotulo: str | None, sufixo: str) -> str:
     return f"tray-{rotulo.replace('+', 'mais')}{sufixo}.png"
 
 
+def icones_do_app() -> None:
+    destino = BUILD / "icons"
+    destino.mkdir(exist_ok=True)
+    grande = Image.open(BUILD / "icon.png").convert("RGBA")
+    for t in TAMANHOS_APP:
+        img = grande if t == grande.width else grande.resize((t, t), Image.LANCZOS)
+        img.save(destino / f"{t}x{t}.png")
+
+
 def main() -> None:
+    icones_do_app()
     for tamanho, sufixo in ((22, ""), (44, "@2x")):
         b = base(tamanho)
         if sufixo:
