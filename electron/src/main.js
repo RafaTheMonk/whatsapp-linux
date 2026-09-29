@@ -63,11 +63,16 @@ const DESKTOP_MENU = path.join(
 );
 const ICONE = path.join(__dirname, "..", "build", "icon.png");
 const ICONE_TRAY = path.join(__dirname, "..", "build", "tray.png");
+// Gerados por scripts/gerar-icones-bandeja.py: o processo principal nao tem
+// canvas para desenhar o numero em tempo de execucao.
+const iconeTrayCom = (rotulo) =>
+  rotulo ? path.join(__dirname, "..", "build", `tray-${rotulo.replace("+", "mais")}.png`) : ICONE_TRAY;
 
 let janela = null;
 let tray = null;
 let encerrando = false;
 let naoLidas = 0;
+let rotuloNaBandeja = "";
 
 const comecarOculto = process.argv.includes("--hidden") || process.argv.includes("--oculto");
 
@@ -328,12 +333,25 @@ function atualizarNaoLidas(titulo) {
   naoLidas = n;
   if (tray) {
     tray.setToolTip(n ? `WhatsApp Linux - ${n} nao lidas` : "WhatsApp Linux");
+    desenharContador();
   }
   // Só funciona em ambiente com Unity launcher; no KDE devolve false.
   try {
     app.setBadgeCount(n);
   } catch {
     /* ambiente sem suporte a badge */
+  }
+}
+
+/** Troca o icone da bandeja so quando o rotulo muda: 12 e 15 dao o mesmo "9+". */
+function desenharContador() {
+  const rotulo = naoLidas > 9 ? "9+" : naoLidas > 0 ? String(naoLidas) : "";
+  if (!tray || rotulo === rotuloNaBandeja) return;
+  try {
+    tray.setImage(nativeImage.createFromPath(iconeTrayCom(rotulo)));
+    rotuloNaBandeja = rotulo;
+  } catch (e) {
+    console.error("nao consegui trocar o icone da bandeja:", e.message);
   }
 }
 
@@ -347,7 +365,9 @@ function montarBandeja() {
     tray = null;
     return;
   }
-  tray.setToolTip("WhatsApp Linux");
+  tray.setToolTip(naoLidas ? `WhatsApp Linux - ${naoLidas} nao lidas` : "WhatsApp Linux");
+  // O titulo pode ter chegado antes da bandeja existir.
+  desenharContador();
   montarMenuBandeja();
   tray.on("click", alternar);
 }

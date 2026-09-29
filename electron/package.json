@@ -31,7 +31,7 @@
     "files": [
       "src/**/*",
       "build/icon.png",
-      "build/tray.png",
+      "build/tray*.png",
       "build/deb-after-install.sh"
     ],
     "linux": {
