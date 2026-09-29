@@ -22,16 +22,26 @@ Saída em `electron/dist/`:
 | `whatsapp-linux_1.0.3_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
 | `whatsapp-linux-1.0.3.tar.gz` | ~114 MB | descompactar e rodar, e a saída em distro sem `.deb` que tenha AppImageLauncher |
 
-Publicar uma versão: subir os três arquivos mais o `SHA256SUMS.txt` numa release
-com a tag `vX.Y.Z`, igual à `version` do `package.json`. É o que o app consulta.
+O `npm run dist` local serve para testar. Versão publicada sai do CI
+(`.github/workflows/release.yml`), numa máquina limpa, com atestação de procedência:
 
 ```bash
-cd dist && sha256sum *1.0.3* > ../SHA256SUMS.txt && cd ..
-gh release create v1.0.3 dist/*1.0.3* SHA256SUMS.txt
+# 1. subir "version" no package.json (e no package-lock.json) e commitar
+# 2. opcional: notas da versão em electron/notas/vX.Y.Z.md; sem elas o GitHub
+#    gera as notas pelos commits
+git tag vX.Y.Z && git push origin main vX.Y.Z
+# 3. o workflow cria a release em RASCUNHO; revisar e publicar:
+gh release edit vX.Y.Z --draft=false
+# 4. guardar os checksums no repositório, como segundo canal de conferência:
+gh release download vX.Y.Z -p SHA256SUMS.txt -O SHA256SUMS.txt --clobber
+git commit -am "chore: checksums dos pacotes da X.Y.Z" && git push
 ```
 
-Filtre pela versão: o `dist/` guarda os builds anteriores, e um `dist/*.AppImage`
-sobe todos eles na mesma release.
+A tag tem que ser igual a `v` + `version` do `package.json`, que é o que o app
+consulta; se não for, o workflow falha antes do build. Ele nunca publica sozinho:
+release publicada vira aviso na bandeja de todo mundo em até um dia, então alguém
+olha o rascunho antes. Para testar o workflow sem gastar versão:
+`gh workflow run release.yml`, e os pacotes saem como artefato da execução.
 
 `dist/` e `node_modules/` estão no `.gitignore`. Os binários não vão para o
 repositório: publique em Releases ou num drive.

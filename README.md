@@ -291,6 +291,14 @@ sha256sum -c SHA256SUMS.txt
 
 Se não bater, o arquivo não é o que este repositório gerou. Não rode.
 
+A partir da versão seguinte à 1.0.3, os pacotes saem do GitHub Actions com
+atestação de procedência, que liga cada arquivo ao workflow e ao commit que o
+gerou. Com o GitHub CLI:
+
+```bash
+gh attestation verify WhatsAppLinux-X.Y.Z-x86_64.AppImage --repo RafaTheMonk/whatsapp-linux
+```
+
 ### Reproduzir o build
 
 ```bash
@@ -302,6 +310,7 @@ npm run dist
 
 O `package-lock.json` está no repositório, então dá para ver exatamente qual versão
 de cada dependência entra no pacote.
+O mesmo roteiro roda no CI a cada versão, em `.github/workflows/release.yml`.
 
 ### Onde olhar no código
 
