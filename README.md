@@ -244,6 +244,13 @@ lixeira, não some: até esvaziar a lixeira, os dados de sessão continuam no di
   tenha desligado no perfil principal. São perfis independentes. Se isso importa,
   abra as configurações do navegador dentro do perfil isolado uma vez, ou use o
   modo tray, que não é Brave.
+- **Pacote Electron, reagir pelo menu do clique direito não funciona.** Os emojis
+  de reação rápida que aparecem no menu do clique direito numa mensagem não reagem:
+  o próprio WhatsApp Web fecha o menu cerca de 135 ms depois de apertar o emoji,
+  antes de soltar o botão, e a reação não é enviada. No Chrome e no Brave funciona.
+  Medido em 29/09/2026 sem achar a causa: não há erro, rolagem nem perda de foco da
+  janela, e o app não interfere no clique. Use o botão de reação que aparece ao lado
+  da mensagem, que funciona.
 
 Alternativa pronta com bandeja: **ZapZap** (`paru -S zapzap` ou
 `flatpak install flathub com.rtosta.zapzap`), também PyQt6, mantido ativamente.
