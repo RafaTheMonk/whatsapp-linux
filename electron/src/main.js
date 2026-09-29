@@ -518,7 +518,9 @@ function montarJanela() {
       nodeIntegration: false,
       sandbox: true,
       preload: path.join(__dirname, "preload.js"),
-      spellcheck: true,
+      // Ligado, o Chromium baixa o dicionario de um servidor do Google, fora do
+      // que o app promete acessar (DISTRIBUICAO.md, Privacidade).
+      spellcheck: false,
       // A promessa central e receber mensagem em segundo plano. Sem isto o
       // Chromium estrangula os timers da janela escondida.
       backgroundThrottling: false,
@@ -591,19 +593,6 @@ function menuDeContexto(wc, p) {
     if (itens.length) itens.push({ type: "separator" });
     itens.push(...novos);
   };
-
-  if (p.misspelledWord) {
-    const sugestoes = (p.dictionarySuggestions || []).slice(0, 5).map((s) => ({
-      label: s,
-      click: () => wc.replaceMisspelling(s),
-    }));
-    if (!sugestoes.length) sugestoes.push({ label: "Sem sugestoes", enabled: false });
-    sugestoes.push({
-      label: "Adicionar ao dicionario",
-      click: () => wc.session.addWordToSpellCheckerDictionary(p.misspelledWord),
-    });
-    bloco(sugestoes);
-  }
 
   if (p.linkURL && !p.linkURL.startsWith("blob:")) {
     bloco([
@@ -747,6 +736,11 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(async () => {
     protegerPerfil();
     session.defaultSession.setUserAgent(USER_AGENT);
+    // spellcheck: false na janela nao basta: a sessao baixa o dicionario do
+    // servidor do Google para cada idioma da lista, mesmo com o corretor
+    // desligado. Lista vazia, nada a baixar.
+    session.defaultSession.setSpellCheckerEnabled(false);
+    session.defaultSession.setSpellCheckerLanguages([]);
     ligarPermissoes(session.defaultSession);
     montarMenu();
     montarJanela();
