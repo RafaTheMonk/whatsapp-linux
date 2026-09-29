@@ -14,6 +14,9 @@ set -euo pipefail
 : "${HOME:?HOME nao definido}"
 
 DESKTOP_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/applications/whatsapp-web.desktop"
+# Copia feita pelo autostart.sh. Nao pode ser symlink (o modo tray acrescenta
+# --hidden ao Exec), entao a correcao tem que chegar nela tambem.
+AUTOSTART_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/autostart/whatsapp-web.desktop"
 QDBUS="$(command -v qdbus6 || command -v qdbus || true)"
 MARK="WAAPPID$$"
 SCRIPT_NAME="wa-appid-$$"
@@ -60,26 +63,36 @@ if [ "$QUANTOS" -gt 1 ]; then
     exit 1
 fi
 
-ATUAL="$(sed -n 's/^StartupWMClass=//p' "$DESKTOP_FILE")"
-if [ "$ATUAL" = "$APPID" ]; then
+# Troca so a linha StartupWMClass, sem sed para nao precisar escapar & e | no
+# valor. Devolve 0 se mudou algo.
+corrigir_wmclass() {
+    local arq="$1" atual tmp linha
+    atual="$(sed -n 's/^StartupWMClass=//p' "$arq")"
+    [ "$atual" = "$APPID" ] && return 1
+    tmp="$(mktemp)"
+    while IFS= read -r linha || [ -n "$linha" ]; do
+        case "$linha" in
+            StartupWMClass=*) printf '%s\n' "StartupWMClass=$APPID" ;;
+            *) printf '%s\n' "$linha" ;;
+        esac
+    done < "$arq" > "$tmp"
+    mv "$tmp" "$arq"
+    chmod 644 "$arq"
+    echo "StartupWMClass atualizado em $arq (era: ${atual:-vazio})"
+}
+
+MUDOU=0
+corrigir_wmclass "$DESKTOP_FILE" && MUDOU=1
+if [ -f "$AUTOSTART_FILE" ]; then
+    corrigir_wmclass "$AUTOSTART_FILE" && MUDOU=1
+fi
+
+if [ "$MUDOU" -eq 0 ]; then
     echo "app_id ja estava correto: $APPID"
     exit 0
 fi
-
-# Substituicao sem sed para nao precisar escapar & e | no valor.
-TMP_DESK="$(mktemp)"
-while IFS= read -r linha; do
-    case "$linha" in
-        StartupWMClass=*) printf '%s\n' "StartupWMClass=$APPID" ;;
-        *) printf '%s\n' "$linha" ;;
-    esac
-done < "$DESKTOP_FILE" > "$TMP_DESK"
-mv "$TMP_DESK" "$DESKTOP_FILE"
-chmod 644 "$DESKTOP_FILE"
 
 command -v update-desktop-database >/dev/null 2>&1 && \
     update-desktop-database "$(dirname "$DESKTOP_FILE")" >/dev/null 2>&1 || true
 
 echo "app_id detectado: $APPID"
-echo "era:              ${ATUAL:-vazio}"
-echo "StartupWMClass atualizado em $DESKTOP_FILE"
