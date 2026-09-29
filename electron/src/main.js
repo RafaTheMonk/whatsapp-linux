@@ -64,7 +64,7 @@ const DESKTOP_MENU = path.join(
 );
 const ICONE = path.join(__dirname, "..", "build", "icon.png");
 const ICONE_TRAY = path.join(__dirname, "..", "build", "tray.png");
-// Gerados por scripts/gerar-icones-bandeja.py: o processo principal nao tem
+// Gerados por scripts/gerar-icones.py: o processo principal nao tem
 // canvas para desenhar o numero em tempo de execucao.
 const iconeTrayCom = (rotulo) =>
   rotulo ? path.join(__dirname, "..", "build", `tray-${rotulo.replace("+", "mais")}.png`) : ICONE_TRAY;
@@ -226,12 +226,19 @@ function atalhoValido() {
 }
 
 function escreverAtalho() {
-  const dirIcone = path.join(
+  // Todos os tamanhos: com so o 512 o painel e a barra de tarefas reduzem na
+  // hora ou caem no icone generico.
+  const hicolor = path.join(
     process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local/share"),
-    "icons/hicolor/512x512/apps"
+    "icons/hicolor"
   );
-  fs.mkdirSync(dirIcone, { recursive: true });
-  fs.copyFileSync(ICONE, path.join(dirIcone, "whatsapp-linux.png"));
+  const dirIcones = path.join(__dirname, "..", "build", "icons");
+  for (const arq of fs.readdirSync(dirIcones)) {
+    if (!/^\d+x\d+\.png$/.test(arq)) continue;
+    const destino = path.join(hicolor, arq.replace(".png", ""), "apps");
+    fs.mkdirSync(destino, { recursive: true });
+    fs.copyFileSync(path.join(dirIcones, arq), path.join(destino, "whatsapp-linux.png"));
+  }
   fs.mkdirSync(path.dirname(DESKTOP_MENU), { recursive: true });
   fs.writeFileSync(DESKTOP_MENU, montarDesktop(caminhoExecutavel()));
   fs.chmodSync(DESKTOP_MENU, 0o644);
@@ -242,8 +249,17 @@ function escreverAtalho() {
  * a entrada. Volta a oferecer se o atalho existente apontar para um arquivo que
  * sumiu, que e o que acontece quando o AppImage e movido de pasta.
  */
+/**
+ * AppImage e tar.gz rodam soltos, sem atalho no menu. O .deb instala em /opt e
+ * ja traz o proprio .desktop; no npm start nao ha pacote nenhum.
+ */
+function precisaDeAtalho() {
+  if (process.env.APPIMAGE) return true;
+  return app.isPackaged && !process.execPath.startsWith("/opt/");
+}
+
 async function oferecerIntegracao() {
-  if (!process.env.APPIMAGE) return;
+  if (!precisaDeAtalho()) return;
 
   const estado = lerEstado();
   const existe = fs.existsSync(DESKTOP_MENU);
@@ -257,9 +273,9 @@ async function oferecerIntegracao() {
     message: quebrado ? "Corrigir o atalho no menu?" : "Adicionar ao menu de aplicativos?",
     detail: quebrado
       ? "O atalho existente aponta para um arquivo que nao esta mais la. " +
-        "Posso reapontar para este AppImage."
+        "Posso reapontar para este."
       : "Cria o atalho apontando para este arquivo, com icone. Se mover o " +
-        "AppImage de lugar depois, o app oferece corrigir.",
+        "app de lugar depois, ele oferece corrigir.",
     buttons: [quebrado ? "Corrigir" : "Adicionar", "Agora nao"],
     defaultId: 0,
     cancelId: 1,
