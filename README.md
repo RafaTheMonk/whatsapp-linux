@@ -268,9 +268,12 @@ Alternativa pronta com bandeja: **ZapZap** (`paru -S zapzap` ou
 - No modo tray, permissões do site são concedidas por lista fechada e só para hosts
   do WhatsApp. Navegação para fora sai para o navegador padrão.
 - O diretório do perfil é criado com permissão `700`, então outros usuários da
-  máquina não leem os cookies de sessão. Continua valendo o cuidado de sempre com
-  disco não criptografado: root lê tudo, e o histórico local do WhatsApp Web fica
-  em claro dentro do perfil.
+  máquina não leem a sessão. Essa permissão é a proteção que existe: a sessão do
+  WhatsApp Web (chaves e histórico) fica no IndexedDB do perfil, que nenhum
+  navegador cifra, e no pacote Electron e no modo tray até os cookies ficam em
+  claro. O chaveiro do sistema (kwallet) não protege nada disso em nenhum modo.
+  Medido em 29/09/2026. Com disco não criptografado, root e quem tiver o disco em
+  mãos leem tudo: use criptografia de disco se isso importa.
 
 ## Auditoria
 

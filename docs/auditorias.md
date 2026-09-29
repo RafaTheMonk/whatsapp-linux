@@ -392,8 +392,11 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
 - ~~**`scripts/autostart.sh` copia o `.desktop`**~~, e a correção do
   `detect-app-id.sh` não chegava na cópia. Resolvido em 29/09/2026: o script corrige
   menu e autostart.
-- **`os_crypt` pode cair para chave fixa no autostart**, se o app subir antes do
-  kwallet abrir. A sessão fica cifrada com chave previsível em vez da do chaveiro.
+- ~~**`os_crypt` pode cair para chave fixa no autostart.**~~ Não se aplica, medido em
+  29/09/2026: o WhatsApp Web guarda a sessão no IndexedDB, que o Chromium não cifra,
+  e perfil novo não recebe cookie nenhum antes do login. No Electron e no modo tray
+  os cookies ficam em claro de qualquer jeito. A proteção real é o `700` do perfil;
+  o README (Segurança) diz isso.
 - ~~**Perfil novo do Brave nasce com a telemetria padrão ligada.**~~ Resolvido em
   29/09/2026: o modo leve grava as opções desligadas ao criar o perfil isolado.
 
