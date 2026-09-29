@@ -1,7 +1,7 @@
 # menu-de-contexto Specification
 
 ## Purpose
-Define o que o clique direito faz no app Electron: quando abre o menu do sistema, com copiar, colar e correção ortográfica, e quando fica com o menu do próprio WhatsApp Web.
+Define o que o clique direito faz no app Electron: quando abre o menu do sistema, com copiar e colar, e quando fica com o menu do próprio WhatsApp Web.
 
 ## Requirements
 
