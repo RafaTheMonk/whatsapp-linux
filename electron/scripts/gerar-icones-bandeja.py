@@ -4,7 +4,7 @@
 O processo principal do Electron nao tem canvas nem fonte, entao os icones com
 numero saem prontos daqui e vao versionados em build/. Mesmo visual do modo
 tray (src/whatsapp-tray.py): circulo vermelho no quarto superior direito, numero
-branco em negrito, "9+" acima de 9.
+branco em negrito, "9+" acima de 9. Tambem gera o icone cinza do app suspenso.
 
 So precisa rodar para mudar os icones. Requer Pillow (pacote python-pillow no
 Arch, python3-pil no Debian); quem roda o app nao precisa de nada disso.
@@ -44,6 +44,14 @@ def com_marca(img: Image.Image, rotulo: str) -> Image.Image:
     return Image.alpha_composite(img, marca)
 
 
+def cinza(img: Image.Image) -> Image.Image:
+    # Tons de cinza mantendo a transparencia, e mais apagado, para ler como inativo.
+    alfa = img.getchannel("A")
+    g = img.convert("L").point(lambda v: 90 + v * 0.45).convert("RGBA")
+    g.putalpha(alfa)
+    return g
+
+
 def nome(rotulo: str | None, sufixo: str) -> str:
     if rotulo is None:
         return f"tray{sufixo}.png"
@@ -57,6 +65,7 @@ def main() -> None:
             b.save(BUILD / nome(None, sufixo))
         for rotulo in ROTULOS:
             com_marca(b, rotulo).save(BUILD / nome(rotulo, sufixo))
+        cinza(b).save(BUILD / f"tray-suspenso{sufixo}.png")
     print("icones gerados em", BUILD)
 
 
