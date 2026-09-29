@@ -300,6 +300,7 @@ de cada dependência entra no pacote.
 | Quais permissões são concedidas | `setPermissionRequestHandler` e `_permissao_qt68` |
 | Para onde vai a navegação externa | `setWindowOpenHandler` e `will-navigate` |
 | Que flags vão para o motor | bloco `QTWEBENGINE_CHROMIUM_FLAGS` e o `exec` em `src/whatsapp-web` |
+| Quando o clique direito abre o menu do sistema | `electron/src/preload.js` e `menuDeContexto` em `electron/src/main.js` |
 | Onde a sessão é gravada | `PROFILE_DIR`, `app.getPath("userData")` |
 
 ### O que o app não faz

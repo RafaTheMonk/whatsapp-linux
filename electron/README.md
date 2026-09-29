@@ -45,6 +45,10 @@ repositório: publique em Releases ou num drive.
 - Permissões por lista fechada (notificação, mídia, área de transferência) e só
   para hosts do WhatsApp.
 - Link externo abre no navegador padrão.
+- Clique direito com texto selecionado ou na caixa de digitar abre o menu do sistema
+  (copiar, colar, recortar, selecionar tudo). No resto fica o menu do próprio
+  WhatsApp. O WhatsApp cancela o clique direito na página inteira, então um preload
+  (`src/preload.js`) deixa o evento passar nesses dois casos, sem expor nada à página.
 - Instância única: abrir de novo traz a janela existente.
 - "Iniciar com o sistema" no menu da bandeja.
 - Primeira execução do AppImage oferece criar o atalho no menu de aplicativos.
