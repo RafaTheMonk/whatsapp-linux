@@ -240,10 +240,11 @@ lixeira, não some: até esvaziar a lixeira, os dados de sessão continuam no di
   câmera e microfone pela interface. Para revogar, apague o perfil
   (`./uninstall.sh --purge`) ou use o modo tray, onde a lista de permissões é
   fechada no código.
-- **Perfil novo do Brave nasce com a telemetria padrão ligada**, mesmo que você a
-  tenha desligado no perfil principal. São perfis independentes. Se isso importa,
-  abra as configurações do navegador dentro do perfil isolado uma vez, ou use o
-  modo tray, que não é Brave.
+- **Telemetria do Brave no perfil isolado:** desde 29/09/2026 o modo leve cria o
+  perfil com P3A, ping diário de uso e relatórios de diagnóstico desligados. Perfil
+  criado antes disso nasceu com a telemetria padrão ligada, porque é independente
+  do perfil principal: abra as configurações do navegador dentro dele uma vez e
+  desligue, ou apague o perfil (`./uninstall.sh --purge`) para ele ser recriado.
 - **Pacote Electron, reagir pelo menu do clique direito não funciona.** Os emojis
   de reação rápida que aparecem no menu do clique direito numa mensagem não reagem:
   o próprio WhatsApp Web fecha o menu cerca de 135 ms depois de apertar o emoji,

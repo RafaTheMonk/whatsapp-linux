@@ -394,8 +394,8 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
   menu e autostart.
 - **`os_crypt` pode cair para chave fixa no autostart**, se o app subir antes do
   kwallet abrir. A sessão fica cifrada com chave previsível em vez da do chaveiro.
-- **Perfil novo do Brave nasce com a telemetria padrão ligada**, mesmo com ela
-  desligada no perfil principal. Já está documentado, mas não resolvido.
+- ~~**Perfil novo do Brave nasce com a telemetria padrão ligada.**~~ Resolvido em
+  29/09/2026: o modo leve grava as opções desligadas ao criar o perfil isolado.
 
 ### Fora do código
 
