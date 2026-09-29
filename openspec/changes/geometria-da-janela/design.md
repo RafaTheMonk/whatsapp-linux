@@ -29,6 +29,13 @@ Um retângulo vale se a interseção com a `workArea` de algum monitor tiver pel
 - [`maximize()` antes do primeiro `show()` não pegar no Wayland] → Medido pelo KWin (`maximizeMode`) no teste. Se não pegar, chamar no `ready-to-show` logo depois do `show()`.
 - [Tamanho salvo igual ao da tela, herdado de outro bug] → O modo tray teve isso. No Electron o `getNormalBounds` não sofre do mesmo caminho, e o guia registra que o Electron foi testado nesse cenário sem o defeito.
 
+## Medições (29/09/2026, KDE Plasma Wayland, pelo KWin)
+
+- Maximizar pelo KWin, encerrar com SIGTERM e reabrir, duas vezes: `maximizeMode=3` nas duas, com o tamanho normal 873x925 guardado.
+- Restaurar pelo KWin na janela reaberta: 873 de largura numa área útil de 1745. Reabrir depois: normal.
+- `maximize()` também mostra a janela (documentado no Electron). Por isso ele roda no primeiro `show`, e não na criação, para não quebrar o `--hidden`.
+- Posição fora de todos os monitores (5000,5000), testada pelo X11 (`--ozone-platform=x11`), porque no Wayland o compositor ignora a posição: com a correção a janela abre em 424,100. O controle sem a correção também abriu dentro da tela, porque o próprio KWin corrige o posicionamento. A validação vale para gerenciadores de janela que não fazem isso.
+
 ## Migration Plan
 
 Sem migração: o campo novo é opcional.
