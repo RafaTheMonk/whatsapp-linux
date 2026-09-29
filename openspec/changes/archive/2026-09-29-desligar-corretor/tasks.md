@@ -4,7 +4,7 @@
 
 - [x] 1.1 Trocar para `spellcheck: false` em `electron/src/main.js` e remover o bloco de sugestões e "Adicionar ao dicionario" de `menuDeContexto`, e verificar com `node --check` e `grep -n misspelled electron/src/main.js` sem resultado
 - [x] 1.2 Rodar a versão de teste com um perfil vazio (`XDG_CONFIG_HOME` apontando para uma pasta temporária) e verificar que a pasta `Dictionaries` fica vazia depois de a página carregar, com um controle de corretor ligado que baixa
-- [ ] 1.3 Fechar o app instalado, conferir com `pgrep -af`, rodar a versão de teste com o perfil real e verificar na mão que palavra errada não é sublinhada e que o clique direito na caixa de digitar mostra só os itens de edição
+- [x] 1.3 Fechar o app instalado, conferir com `pgrep -af`, rodar a versão de teste com o perfil real e verificar na mão que palavra errada não é sublinhada e que o clique direito na caixa de digitar mostra só os itens de edição
 
 ## 2. Documentação
 
