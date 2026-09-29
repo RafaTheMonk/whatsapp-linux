@@ -12,6 +12,7 @@ const {
   app,
   BrowserWindow,
   Menu,
+  clipboard,
   Tray,
   dialog,
   nativeImage,
@@ -450,6 +451,7 @@ function montarJanela() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      preload: path.join(__dirname, "preload.js"),
       spellcheck: true,
       // A promessa central e receber mensagem em segundo plano. Sem isto o
       // Chromium estrangula os timers da janela escondida.
@@ -475,6 +477,8 @@ function montarJanela() {
   };
   wc.on("will-navigate", barrarSaida);
   wc.on("will-redirect", barrarSaida);
+
+  wc.on("context-menu", (e, params) => menuDeContexto(wc, params));
 
   wc.on("page-title-updated", (e, titulo) => {
     e.preventDefault();
@@ -506,6 +510,66 @@ function montarJanela() {
   janela.once("ready-to-show", () => {
     if (!comecarOculto) janela.show();
   });
+}
+
+/**
+ * O Electron nao traz menu de contexto: sem este handler o clique direito nao
+ * faz nada, nem sobre texto selecionado. Monta so o que faz sentido para o
+ * ponto clicado, como o Chrome.
+ */
+function menuDeContexto(wc, p) {
+  const itens = [];
+  const bloco = (novos) => {
+    if (!novos.length) return;
+    if (itens.length) itens.push({ type: "separator" });
+    itens.push(...novos);
+  };
+
+  if (p.misspelledWord) {
+    const sugestoes = (p.dictionarySuggestions || []).slice(0, 5).map((s) => ({
+      label: s,
+      click: () => wc.replaceMisspelling(s),
+    }));
+    if (!sugestoes.length) sugestoes.push({ label: "Sem sugestoes", enabled: false });
+    sugestoes.push({
+      label: "Adicionar ao dicionario",
+      click: () => wc.session.addWordToSpellCheckerDictionary(p.misspelledWord),
+    });
+    bloco(sugestoes);
+  }
+
+  if (p.linkURL && !p.linkURL.startsWith("blob:")) {
+    bloco([
+      { label: "Abrir link no navegador", click: () => externo(p.linkURL) },
+      { label: "Copiar endereco do link", click: () => clipboard.writeText(p.linkURL) },
+    ]);
+  }
+
+  if (p.mediaType === "image" && p.hasImageContents) {
+    bloco([
+      { label: "Copiar imagem", click: () => wc.copyImageAt(p.x, p.y) },
+      { label: "Salvar imagem como...", click: () => wc.downloadURL(p.srcURL) },
+    ]);
+  }
+
+  const f = p.editFlags || {};
+  if (p.isEditable) {
+    bloco([
+      { role: "undo", label: "Desfazer", enabled: f.canUndo },
+      { role: "redo", label: "Refazer", enabled: f.canRedo },
+      { type: "separator" },
+      { role: "cut", label: "Recortar", enabled: f.canCut },
+      { role: "copy", label: "Copiar", enabled: f.canCopy },
+      { role: "paste", label: "Colar", enabled: f.canPaste },
+      { role: "pasteAndMatchStyle", label: "Colar sem formatacao", enabled: f.canPaste },
+      { role: "selectAll", label: "Selecionar tudo", enabled: f.canSelectAll },
+    ]);
+  } else if (p.selectionText && p.selectionText.trim()) {
+    bloco([{ role: "copy", label: "Copiar", enabled: f.canCopy }]);
+  }
+
+  if (!itens.length) return;
+  Menu.buildFromTemplate(itens).popup({ window: janela || undefined });
 }
 
 function salvarBounds() {
