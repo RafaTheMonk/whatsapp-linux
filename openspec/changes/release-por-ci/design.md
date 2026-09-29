@@ -34,6 +34,10 @@ Build atual: `npm ci`, `node node_modules/electron/install.js` (o npm 11 bloquei
 - [O runner do GitHub gerar `.deb` diferente do local, por exemplo por falta de dependência do fpm] → O disparo manual mostra isso antes de qualquer tag.
 - [Checksums do CI diferentes dos de um build local] → Esperado, por causa das datas. A conferência passa a ser contra a release e a atestação.
 
+## Medições
+
+- 29/09/2026, disparo manual (run 36607801392): verde. Os passos da tag (versão, atestação, release) foram pulados como previsto, o artefato `pacotes` saiu com 331 MB e a última release publicada continuou sendo a v1.0.3.
+
 ## Migration Plan
 
 A próxima versão sai pelo CI. As releases até a 1.0.3 continuam como estão, sem atestação.

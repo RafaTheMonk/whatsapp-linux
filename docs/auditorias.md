@@ -405,5 +405,7 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
 ### Fora do código
 
 - **Só existe build x86_64.** Sem ARM64, o que exclui Raspberry Pi e notebooks ARM.
-- **A release é publicada na mão.** Um workflow de CI que dispare no push de tag
-  evitaria o build sair da máquina de alguém, que é o oposto de reprodutível.
+- ~~**A release é publicada na mão.**~~ Resolvido em 29/09/2026: tag `vX.Y.Z` gera os
+  pacotes no GitHub Actions, com atestação de procedência, e cria a release em
+  rascunho (`.github/workflows/release.yml`). Primeiro disparo manual verde, run
+  36607801392.
