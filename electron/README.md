@@ -81,10 +81,12 @@ conectados.
 
 ## app_id no Wayland
 
-No Wayland o Electron usa o nome do app como `app_id` da janela. Por isso o código
-chama `app.setName("whatsapp-linux")`, igual ao `StartupWMClass` do `.desktop`.
-Com `app.setName("WhatsApp Linux")` o `app_id` sai com espaço, não casa, e a janela
-cai na barra de tarefas sem ícone. Medido no KDE Plasma sobre Wayland.
+O `app_id` da janela precisa casar com o `StartupWMClass` do `.desktop`
+(`whatsapp-linux`); se não casa, a janela cai na barra de tarefas sem ícone. Quem
+define o `app_id` não é o `app.setName`: no pacote ele vem do `executableName` do
+`package.json` e no `npm start` do `name`, os dois `whatsapp-linux`. Mudar o
+`app.setName` não muda o `app_id`. Medido no KDE Plasma sobre Wayland com
+Electron 44, em 11/09/2026.
 
 ## Versão do Electron e atualização
 
