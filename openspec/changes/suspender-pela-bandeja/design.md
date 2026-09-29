@@ -33,7 +33,7 @@ Sem página não há título para ler, e mostrar um número velho enganaria. Ao 
 ## Risks / Trade-offs
 
 - [Usuário esquece que suspendeu e perde mensagens] → Ícone cinza, tooltip explícito e nada automático.
-- [Quanto sobra suspenso não é conhecido ainda] → Medir na implementação e registrar no README. A estimativa pelo Electron vazio é de 200 a 250 MB.
+- [Sobra mais do que o estimado] → Medido em 29/09/2026: 838 MB antes, 399 MB suspenso. Sobram principal ~150 MB, GPU ~105 MB, um renderer de ~66 MB (provavelmente o service worker do WhatsApp; o Electron 44 só lista workers, não para) e rede ~33 MB. Apagar o registro do service worker liberaria esses 66 MB, mas deixaria a volta mais lenta: descartado.
 - [Voltar demora o tempo de o WhatsApp carregar e sincronizar] → Aceito. É o custo da economia.
 - [O `window-all-closed` encerrar o app com a janela destruída] → Já faz `preventDefault` quando há bandeja. Sem bandeja o item não existe, porque o menu é da própria bandeja.
 
