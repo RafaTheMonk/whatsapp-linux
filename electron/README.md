@@ -18,16 +18,16 @@ Saída em `electron/dist/`:
 
 | Arquivo | Tamanho | Para quem |
 |---|---|---|
-| `WhatsAppLinux-1.0.2-x86_64.AppImage` | ~119 MB | qualquer distro, sem instalar |
-| `whatsapp-linux_1.0.2_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
-| `whatsapp-linux-1.0.2.tar.gz` | ~114 MB | descompactar e rodar, e a saída em distro sem `.deb` que tenha AppImageLauncher |
+| `WhatsAppLinux-1.0.3-x86_64.AppImage` | ~119 MB | qualquer distro, sem instalar |
+| `whatsapp-linux_1.0.3_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
+| `whatsapp-linux-1.0.3.tar.gz` | ~114 MB | descompactar e rodar, e a saída em distro sem `.deb` que tenha AppImageLauncher |
 
 Publicar uma versão: subir os três arquivos mais o `SHA256SUMS.txt` numa release
 com a tag `vX.Y.Z`, igual à `version` do `package.json`. É o que o app consulta.
 
 ```bash
-cd dist && sha256sum *1.0.2* > ../SHA256SUMS.txt && cd ..
-gh release create v1.0.2 dist/*1.0.2* SHA256SUMS.txt
+cd dist && sha256sum *1.0.3* > ../SHA256SUMS.txt && cd ..
+gh release create v1.0.3 dist/*1.0.3* SHA256SUMS.txt
 ```
 
 Filtre pela versão: o `dist/` guarda os builds anteriores, e um `dist/*.AppImage`
@@ -132,7 +132,7 @@ sem userns utilizável, e repete o `update-alternatives` do original (o
 - Não aparece no menu sozinho. O app oferece criar o atalho na primeira execução.
 - Precisa de FUSE 2. Ubuntu 22.04 e mais novos não trazem
   (`sudo apt install libfuse2`). Alternativa sem instalar nada:
-  `./WhatsAppLinux-1.0.2-x86_64.AppImage --appimage-extract-and-run`
+  `./WhatsAppLinux-1.0.3-x86_64.AppImage --appimage-extract-and-run`
 - No Ubuntu 24.04 o AppArmor bloqueia user namespace sem privilégio e o sandbox do
   Chromium falha. Use o `.deb`, que instala o `chrome-sandbox` com SUID e por isso
   não depende de user namespace. Não use `--no-sandbox`.
