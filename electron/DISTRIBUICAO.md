@@ -106,3 +106,7 @@ conversas não muda: ele só desenha a janela. A sessão fica só no seu computa
 
 A única coisa que ele acessa fora do WhatsApp é a página de releases do GitHub, para
 a checagem de versão descrita acima, e isso pode ser desligado.
+
+Por isso o app não tem corretor ortográfico: o do navegador embutido baixa o
+dicionário de um servidor do Google. Versões até a 1.0.2 chegaram a baixar; se
+quiser apagar o que sobrou, é a pasta `~/.config/whatsapp-linux/Dictionaries/`.

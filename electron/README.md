@@ -45,6 +45,9 @@ repositório: publique em Releases ou num drive.
   conversas com mensagem não lida, não mensagens. Os ícones com número saem de
   `scripts/gerar-icones-bandeja.py`.
 - User agent de Chrome puro. O WhatsApp Web recusa quem se anuncia como Electron.
+- Sem corretor ortográfico, de propósito: o do Chromium baixa o dicionário de um
+  servidor do Google. Não basta `spellcheck: false` na janela, a sessão baixa um
+  dicionário por idioma da lista; o app também esvazia essa lista.
 - Permissões por lista fechada (notificação, mídia, área de transferência) e só
   para hosts do WhatsApp.
 - Link externo abre no navegador padrão.

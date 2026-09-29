@@ -369,9 +369,8 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
 - ~~**Contador de não lidas só aparece no tooltip.**~~ Resolvido em 29/09/2026: o
   número é desenhado sobre o ícone da bandeja com ícones pré-gerados
   (`electron/scripts/gerar-icones-bandeja.py`).
-- **`spellcheck: true` baixa dicionário de servidor do Google.** Contradiz o que o
-  `DISTRIBUICAO.md` promete sobre não acessar nada além do WhatsApp e da checagem
-  de versão. Decidir: desligar, ou declarar na documentação.
+- ~~**`spellcheck: true` baixa dicionário de servidor do Google.**~~ Resolvido em
+  29/09/2026: corretor desligado na janela e na sessão, com a lista de idiomas vazia.
 - **Geometria restaurada sem conferir se ainda cabe.** Se a janela foi fechada num
   monitor que não existe mais, ela reabre fora da tela. Comparar com
   `screen.getDisplayMatching(bounds)` antes de aplicar.
