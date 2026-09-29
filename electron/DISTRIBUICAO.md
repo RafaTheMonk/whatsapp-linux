@@ -98,6 +98,9 @@ tar -xzf whatsapp-linux-1.0.2.tar.gz -C ~/.local/lib/
 ~/.local/lib/whatsapp-linux-1.0.2/whatsapp-linux
 ```
 
+Na primeira vez ele pergunta se quer adicionar ao menu de aplicativos, igual ao
+AppImage. Depois disso ele abre pelo menu, com ícone.
+
 ## Privacidade
 
 O app abre o WhatsApp Web oficial, nada mais. A criptografia ponta a ponta das suas

@@ -368,17 +368,16 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
 
 - ~~**Contador de não lidas só aparece no tooltip.**~~ Resolvido em 29/09/2026: o
   número é desenhado sobre o ícone da bandeja com ícones pré-gerados
-  (`electron/scripts/gerar-icones-bandeja.py`).
+  (`electron/scripts/gerar-icones.py`).
 - ~~**`spellcheck: true` baixa dicionário de servidor do Google.**~~ Resolvido em
   29/09/2026: corretor desligado na janela e na sessão, com a lista de idiomas vazia.
 - ~~**Geometria restaurada sem conferir se ainda cabe.**~~ Resolvido em 29/09/2026:
   os limites salvos são conferidos contra a área útil dos monitores, e a janela
   reabre maximizada quando foi fechada assim.
-- **`tar.gz` não traz `.desktop` nem ícone**, mas a documentação o oferece como
-  "descompactar e rodar". Ou gerar um instalador junto, ou dizer que ele é para
-  quem sabe o que está fazendo.
-- **Pacote instala só o ícone 512x512.** Faltam os tamanhos menores que a barra de
-  tarefas e o menu usam.
+- ~~**`tar.gz` não traz `.desktop` nem ícone.**~~ Resolvido em 29/09/2026: a primeira
+  execução oferece criar o atalho, como no AppImage.
+- ~~**Pacote instala só o ícone 512x512.**~~ Resolvido em 29/09/2026: `.deb`, AppImage
+  e o atalho criado pelo app instalam de 16 a 512 px.
 - ~~**`preventDefault` em `page-title-updated` está no emissor errado.**~~ Resolvido em
   29/09/2026. Não era inócuo: o KWin mostrava "(1) WhatsApp" como título da janela.
 
