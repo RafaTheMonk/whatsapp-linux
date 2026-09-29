@@ -379,8 +379,8 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
   quem sabe o que está fazendo.
 - **Pacote instala só o ícone 512x512.** Faltam os tamanhos menores que a barra de
   tarefas e o menu usam.
-- **`preventDefault` em `page-title-updated` está no emissor errado** e não impede
-  nada. Inócuo hoje, mas é código que mente sobre o que faz.
+- ~~**`preventDefault` em `page-title-updated` está no emissor errado.**~~ Resolvido em
+  29/09/2026. Não era inócuo: o KWin mostrava "(1) WhatsApp" como título da janela.
 
 ### Modos shell
 
