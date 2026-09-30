@@ -1,7 +1,8 @@
-# Gera os pacotes do app Electron numa maquina limpa.
+# Gera os pacotes do app Electron numa maquina limpa, para x64 e arm64.
 #
-# Tag vX.Y.Z: confere a versao, gera AppImage, deb e tar.gz, atesta a procedencia
-# e cria a release como RASCUNHO. Publicar e passo humano: o app avisa todo mundo
+# Tag vX.Y.Z: confere a versao, gera AppImage, deb e tar.gz nas duas
+# arquiteturas (cada uma num runner nativo), junta tudo, atesta a procedencia e
+# cria a release como RASCUNHO. Publicar e passo humano: o app avisa todo mundo
 # da ultima release publicada em ate um dia.
 #
 # Disparo manual: mesmo build, pacotes so como artefato, sem release.
@@ -20,11 +21,16 @@ permissions:
 
 jobs:
   pacotes:
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write      # criar a release em rascunho
-      id-token: write      # assinar a atestacao
-      attestations: write
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x64
+            file: x86-64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+            file: ARM aarch64
+    runs-on: ${{ matrix.runner }}
     defaults:
       run:
         working-directory: electron
@@ -59,47 +65,73 @@ jobs:
       - name: Gerar AppImage, deb e tar.gz
         run: npm run dist
 
-      - name: Checksums
+      # Sem isto, um erro de configuracao publicaria binario x64 com nome de arm64.
+      - name: Binario e da arquitetura certa
+        env:
+          ESPERADO: ${{ matrix.file }}
         run: |
-          versao="$(node -p 'require("./package.json").version')"
-          cd dist
-          sha256sum *"$versao"*.AppImage *"$versao"*.deb *"$versao"*.tar.gz > ../SHA256SUMS.txt
-          cat ../SHA256SUMS.txt
+          # Padrao vazio casaria com qualquer binario.
+          [ -n "$ESPERADO" ] || { echo "::error::arquitetura esperada vazia"; exit 1; }
+          info="$(file dist/linux*-unpacked/whatsapp-linux)"
+          echo "$info"
+          case "$info" in
+            *"$ESPERADO"*) ;;
+            *) echo "::error::esperava $ESPERADO"; exit 1 ;;
+          esac
 
-      - name: Artefato do disparo manual
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: pacotes
+          name: pacotes-${{ matrix.arch }}
           path: |
             electron/dist/*.AppImage
             electron/dist/*.deb
             electron/dist/*.tar.gz
-            electron/SHA256SUMS.txt
           if-no-files-found: error
 
-      - name: Atestar procedencia
-        if: github.event_name == 'push'
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+  # So na tag. Unico job com permissao de escrita e de assinatura, e um
+  # SHA256SUMS.txt so para as duas arquiteturas.
+  release:
+    if: github.event_name == 'push'
+    needs: pacotes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write      # criar a release em rascunho
+      id-token: write      # assinar a atestacao
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: pacotes-*
+          path: pacotes
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: pacotes
+        run: |
+          sha256sum *.AppImage *.deb *.tar.gz > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
-            electron/dist/*.AppImage
-            electron/dist/*.deb
-            electron/dist/*.tar.gz
+            pacotes/*.AppImage
+            pacotes/*.deb
+            pacotes/*.tar.gz
 
       - name: Release em rascunho
-        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
-          versao="${TAG#v}"
           # Notas escritas a mao, se existirem; senao o GitHub gera pelos commits.
-          if [ -f "notas/$TAG.md" ]; then
-            notas=(--notes-file "notas/$TAG.md")
+          if [ -f "electron/notas/$TAG.md" ]; then
+            notas=(--notes-file "electron/notas/$TAG.md")
           else
             notas=(--generate-notes)
           fi
           gh release create "$TAG" --draft --title "$TAG" "${notas[@]}" \
-            dist/*"$versao"*.AppImage dist/*"$versao"*.deb dist/*"$versao"*.tar.gz \
-            SHA256SUMS.txt
+            pacotes/*.AppImage pacotes/*.deb pacotes/*.tar.gz pacotes/SHA256SUMS.txt
