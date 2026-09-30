@@ -20,7 +20,7 @@ Saída em `electron/dist/`:
 |---|---|---|
 | `WhatsAppLinux-1.0.3-x86_64.AppImage` | ~119 MB | qualquer distro, sem instalar |
 | `whatsapp-linux_1.0.3_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
-| `whatsapp-linux-1.0.3.tar.gz` | ~114 MB | descompactar e rodar, e a saída em distro sem `.deb` que tenha AppImageLauncher |
+| `whatsapp-linux-1.0.3-x64.tar.gz` | ~114 MB | descompactar e rodar, e a saída em distro sem `.deb` que tenha AppImageLauncher |
 
 O `npm run dist` local serve para testar. Versão publicada sai do CI
 (`.github/workflows/release.yml`), numa máquina limpa, com atestação de procedência:
@@ -36,6 +36,10 @@ gh release edit vX.Y.Z --draft=false
 gh release download vX.Y.Z -p SHA256SUMS.txt -O SHA256SUMS.txt --clobber
 git commit -am "chore: checksums dos pacotes da X.Y.Z" && git push
 ```
+
+O CI gera x64 e arm64, cada um num runner nativo, e confere com `file` que o
+binário é da arquitetura do nome antes de subir. A release sai com seis pacotes e
+um `SHA256SUMS.txt` único. O `npm run dist` local gera só a arquitetura da máquina.
 
 A tag tem que ser igual a `v` + `version` do `package.json`, que é o que o app
 consulta; se não for, o workflow falha antes do build. Ele nunca publica sozinho:

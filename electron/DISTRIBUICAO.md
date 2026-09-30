@@ -93,6 +93,9 @@ preparado para essa versão.
 de lugar e cria um atalho que roda o app com `--no-sandbox`, desligando uma camada
 de proteção. Prefira o `.deb`, ou o `tar.gz`:
 
+A partir da versão seguinte à 1.0.3, o nome leva a arquitetura:
+`whatsapp-linux-X.Y.Z-x64.tar.gz` ou `-arm64.tar.gz`.
+
 ```bash
 tar -xzf whatsapp-linux-1.0.3.tar.gz -C ~/.local/lib/
 ~/.local/lib/whatsapp-linux-1.0.3/whatsapp-linux

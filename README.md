@@ -25,7 +25,10 @@ chmod +x WhatsAppLinux-1.0.3-x86_64.AppImage
 ```
 
 Confira o arquivo antes de rodar com `sha256sum -c SHA256SUMS.txt`, que vai junto na
-release. Só x86_64 por enquanto.
+release. A 1.0.3 é só x86_64. A partir da versão seguinte saem também pacotes
+ARM64 (Raspberry Pi 4 e 5, notebooks ARM), com `arm64` no nome do arquivo. Eles são
+gerados e conferidos no CI, num runner ARM nativo, mas ainda não foram testados
+rodando em hardware ARM: se usar, conte como foi numa issue.
 
 Quem prefere rodar direto do código, sem pacote, veja [Instalação](#instalação).
 
