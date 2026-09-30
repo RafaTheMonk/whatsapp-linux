@@ -23,6 +23,8 @@ O workflow atual (`release.yml`) tem um job só, em `ubuntu-24.04`, que gera, at
 
 **4. `tar.gz` com `${arch}` no nome, também no x64.** Nome de arquivo não é contrato do app (a checagem de versão olha só a tag), mas é o que o usuário digita no terminal. Documentação atualizada junto.
 
+**5. `fpm` do sistema no arm64.** O `fpm` que o electron-builder baixa vem com Ruby x86 e não executa no runner ARM (primeiro disparo, 30/09/2026, run 36722531457: AppImage e `tar.gz` arm64 saíram, o `.deb` falhou com "cannot execute"). No arm64 o job instala o `fpm` 1.18.0 pelo RubyGems, conferindo o SHA-256 do `.gem`, e liga `USE_SYSTEM_FPM=true`. As dependências do `fpm` vêm do RubyGems sem versão fixada, e isso fica aceito como risco de build.
+
 ## Risks / Trade-offs
 
 - [Pacote arm64 com defeito que só aparece rodando em ARM] → Documentado como "gerado e conferido no CI, sem teste em hardware ARM". Quem testar pode abrir issue.
