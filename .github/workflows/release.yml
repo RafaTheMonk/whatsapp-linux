@@ -22,6 +22,9 @@ permissions:
 jobs:
   pacotes:
     strategy:
+      # Uma arquitetura falhando nao cancela a outra: o diagnostico sai completo.
+      # A release depende das duas de qualquer jeito.
+      fail-fast: false
       matrix:
         include:
           - runner: ubuntu-24.04
@@ -62,8 +65,23 @@ jobs:
           # O npm 11 bloqueia o postinstall do Electron; rodar de novo e inofensivo.
           node node_modules/electron/install.js
 
+      # O fpm que o electron-builder baixa traz um Ruby x86 e nao roda no runner
+      # ARM (medido em 30/09/2026, run 36722531457). No arm64 usa o fpm do
+      # sistema, com o .gem conferido pelo SHA-256 publicado no RubyGems.
+      - name: fpm do sistema no arm64
+        if: matrix.arch == 'arm64'
+        run: |
+          command -v gem >/dev/null || { sudo apt-get update && sudo apt-get install -y ruby ruby-dev build-essential; }
+          curl -fsSLo /tmp/fpm.gem https://rubygems.org/downloads/fpm-1.18.0.gem
+          echo "6c6645d51e0cc687faab35441ac6ef1c6ed9b333615ac47f568dd5f9fd46a185  /tmp/fpm.gem" | sha256sum -c
+          sudo gem install --no-document /tmp/fpm.gem
+          echo "USE_SYSTEM_FPM=true" >> "$GITHUB_ENV"
+          fpm --version
+
       - name: Gerar AppImage, deb e tar.gz
-        run: npm run dist
+        # --publish never: o electron-builder nunca mexe em release; quem cria o
+        # rascunho e o job release.
+        run: npm run dist -- --publish never
 
       # Sem isto, um erro de configuracao publicaria binario x64 com nome de arm64.
       - name: Binario e da arquitetura certa
