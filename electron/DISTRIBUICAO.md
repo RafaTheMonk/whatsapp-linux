@@ -8,12 +8,17 @@ Não precisa ter navegador nem instalar dependência: já vem tudo dentro.
 **Baixe sempre pela página de releases:**
 https://github.com/RafaTheMonk/whatsapp-linux/releases/latest
 
+Computador com processador ARM (Raspberry Pi 4 e 5, notebook ARM): baixe os
+arquivos com `arm64` no nome e troque `amd64` e `x86_64` por `arm64` nos comandos
+abaixo. A versão ARM é gerada e conferida automaticamente, mas ainda não foi
+testada num aparelho ARM.
+
 ## Ubuntu, Mint, Debian, Pop!_OS
 
 Baixe o arquivo `.deb` e instale com dois cliques, ou pelo terminal:
 
 ```bash
-sudo apt install ./whatsapp-linux_1.0.3_amd64.deb
+sudo apt install ./whatsapp-linux_1.0.4_amd64.deb
 ```
 
 Depois procure "WhatsApp Linux" no menu de aplicativos.
@@ -23,8 +28,8 @@ Depois procure "WhatsApp Linux" no menu de aplicativos.
 Baixe o arquivo `.AppImage` e libere a execução:
 
 ```bash
-chmod +x WhatsAppLinux-1.0.3-x86_64.AppImage
-./WhatsAppLinux-1.0.3-x86_64.AppImage
+chmod +x WhatsAppLinux-1.0.4-x86_64.AppImage
+./WhatsAppLinux-1.0.4-x86_64.AppImage
 ```
 
 Sem terminal: clique com o botão direito no arquivo, Propriedades, Permissões,
@@ -83,7 +88,7 @@ sudo apt install libfuse2
 Ou rode sem instalar nada:
 
 ```bash
-./WhatsAppLinux-1.0.3-x86_64.AppImage --appimage-extract-and-run
+./WhatsAppLinux-1.0.4-x86_64.AppImage --appimage-extract-and-run
 ```
 
 **Erro de sandbox no Ubuntu 24.04:** use o `.deb` em vez do AppImage. Ele já vem
@@ -93,12 +98,9 @@ preparado para essa versão.
 de lugar e cria um atalho que roda o app com `--no-sandbox`, desligando uma camada
 de proteção. Prefira o `.deb`, ou o `tar.gz`:
 
-A partir da versão seguinte à 1.0.3, o nome leva a arquitetura:
-`whatsapp-linux-X.Y.Z-x64.tar.gz` ou `-arm64.tar.gz`.
-
 ```bash
-tar -xzf whatsapp-linux-1.0.3.tar.gz -C ~/.local/lib/
-~/.local/lib/whatsapp-linux-1.0.3/whatsapp-linux
+tar -xzf whatsapp-linux-1.0.4-x64.tar.gz -C ~/.local/lib/
+~/.local/lib/whatsapp-linux-1.0.4-x64/whatsapp-linux
 ```
 
 Na primeira vez ele pergunta se quer adicionar ao menu de aplicativos, igual ao

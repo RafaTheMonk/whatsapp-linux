@@ -12,23 +12,25 @@ Testado em CachyOS com KDE Plasma sobre Wayland. Deve funcionar em qualquer dist
 
 | Sua distro | Arquivo |
 |---|---|
-| Ubuntu, Mint, Debian, Pop!_OS | `.deb` |
-| Fedora, Arch, openSUSE, Manjaro, outras | `.AppImage` |
+| Ubuntu, Mint, Debian, Pop!_OS | `.deb` (`amd64`, ou `arm64` em ARM) |
+| Fedora, Arch, openSUSE, Manjaro, outras | `.AppImage` (`x86_64`, ou `arm64` em ARM) |
 
 ```bash
 # Debian e derivados
-sudo apt install ./whatsapp-linux_1.0.3_amd64.deb
+sudo apt install ./whatsapp-linux_1.0.4_amd64.deb
 
 # AppImage
-chmod +x WhatsAppLinux-1.0.3-x86_64.AppImage
-./WhatsAppLinux-1.0.3-x86_64.AppImage
+chmod +x WhatsAppLinux-1.0.4-x86_64.AppImage
+./WhatsAppLinux-1.0.4-x86_64.AppImage
 ```
 
+Em ARM (Raspberry Pi 4 e 5, notebooks ARM), troque `amd64` e `x86_64` por `arm64`.
+Os pacotes ARM64 existem desde a 1.0.4: são gerados e conferidos no CI, num runner
+ARM nativo, mas ainda não foram testados rodando em hardware ARM. Se usar, conte
+como foi numa issue.
+
 Confira o arquivo antes de rodar com `sha256sum -c SHA256SUMS.txt`, que vai junto na
-release. A 1.0.3 é só x86_64. A partir da versão seguinte saem também pacotes
-ARM64 (Raspberry Pi 4 e 5, notebooks ARM), com `arm64` no nome do arquivo. Eles são
-gerados e conferidos no CI, num runner ARM nativo, mas ainda não foram testados
-rodando em hardware ARM: se usar, conte como foi numa issue.
+release, ou com a atestação de procedência (ver [Auditoria](#auditoria)).
 
 Quem prefere rodar direto do código, sem pacote, veja [Instalação](#instalação).
 
@@ -76,7 +78,7 @@ acumula CVE. Quem distribui assume manter a versão em dia. Veja
 
 As duas primeiras são scripts que rodam da própria pasta do repositório. A terceira
 é um pacote pronto (`AppImage`, `.deb`, `tar.gz`) para mandar para alguém que só
-quer baixar e usar, hoje com **Electron 44.3.0 (Chromium 152)**. Detalhes de build e
+quer baixar e usar, hoje com **Electron 44.5.1 (Chromium 152)**. Detalhes de build e
 distribuição em [`electron/README.md`](electron/README.md).
 
 O modo tray existe porque o WhatsApp Web não desconecta quando você fecha a janela.
@@ -294,12 +296,12 @@ sha256sum -c SHA256SUMS.txt
 
 Se não bater, o arquivo não é o que este repositório gerou. Não rode.
 
-A partir da versão seguinte à 1.0.3, os pacotes saem do GitHub Actions com
+Desde a 1.0.4, os pacotes saem do GitHub Actions com
 atestação de procedência, que liga cada arquivo ao workflow e ao commit que o
 gerou. Com o GitHub CLI:
 
 ```bash
-gh attestation verify WhatsAppLinux-X.Y.Z-x86_64.AppImage --repo RafaTheMonk/whatsapp-linux
+gh attestation verify WhatsAppLinux-1.0.4-x86_64.AppImage --repo RafaTheMonk/whatsapp-linux
 ```
 
 ### Reproduzir o build

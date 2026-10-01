@@ -18,9 +18,9 @@ Saída em `electron/dist/`:
 
 | Arquivo | Tamanho | Para quem |
 |---|---|---|
-| `WhatsAppLinux-1.0.3-x86_64.AppImage` | ~119 MB | qualquer distro, sem instalar |
-| `whatsapp-linux_1.0.3_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
-| `whatsapp-linux-1.0.3-x64.tar.gz` | ~114 MB | descompactar e rodar, e a saída em distro sem `.deb` que tenha AppImageLauncher |
+| `WhatsAppLinux-1.0.4-x86_64.AppImage` | ~119 MB | qualquer distro, sem instalar |
+| `whatsapp-linux_1.0.4_amd64.deb` | ~85 MB | Ubuntu, Mint, Debian, Pop!_OS |
+| `whatsapp-linux-1.0.4-x64.tar.gz` | ~114 MB | descompactar e rodar, e a saída em distro sem `.deb` que tenha AppImageLauncher |
 
 O `npm run dist` local serve para testar. Versão publicada sai do CI
 (`.github/workflows/release.yml`), numa máquina limpa, com atestação de procedência:
@@ -105,7 +105,7 @@ Electron 44, em 11/09/2026.
 ## Versão do Electron e atualização
 
 O projeto pina a versão exata do Electron, sem caret, para o build ser
-reproduzível. Hoje: **Electron 44.3.0, com Chromium 152**.
+reproduzível. Hoje: **Electron 44.5.1, com Chromium 152**.
 
 Isto não é detalhe de dependência, é postura de segurança. Um wrapper é um
 navegador inteiro: entregar um Electron fora de suporte é entregar um navegador
@@ -146,7 +146,7 @@ sem userns utilizável, e repete o `update-alternatives` do original (o
 - Não aparece no menu sozinho. O app oferece criar o atalho na primeira execução.
 - Precisa de FUSE 2. Ubuntu 22.04 e mais novos não trazem
   (`sudo apt install libfuse2`). Alternativa sem instalar nada:
-  `./WhatsAppLinux-1.0.3-x86_64.AppImage --appimage-extract-and-run`
+  `./WhatsAppLinux-1.0.4-x86_64.AppImage --appimage-extract-and-run`
 - No Ubuntu 24.04 o AppArmor bloqueia user namespace sem privilégio e o sandbox do
   Chromium falha. Use o `.deb`, que instala o `chrome-sandbox` com SUID e por isso
   não depende de user namespace. Não use `--no-sandbox`.
