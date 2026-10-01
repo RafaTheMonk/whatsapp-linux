@@ -404,7 +404,10 @@ Ordem sugerida de ataque, do que mais incomoda para o que menos.
 
 ### Fora do código
 
-- **Só existe build x86_64.** Sem ARM64, o que exclui Raspberry Pi e notebooks ARM.
+- ~~**Só existe build x86_64.**~~ Resolvido em 30/09/2026: o CI gera também arm64,
+  num runner ARM nativo, e confere a arquitetura do binário antes de subir (run
+  36723174425). Vale a partir da versão seguinte à 1.0.3. Sem teste em hardware
+  ARM, e sem armv7, que o Electron 44 não publica para Linux.
 - ~~**A release é publicada na mão.**~~ Resolvido em 29/09/2026: tag `vX.Y.Z` gera os
   pacotes no GitHub Actions, com atestação de procedência, e cria a release em
   rascunho (`.github/workflows/release.yml`). Primeiro disparo manual verde, run
