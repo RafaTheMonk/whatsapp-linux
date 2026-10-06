@@ -15,6 +15,7 @@ const {
   clipboard,
   Tray,
   dialog,
+  ipcMain,
   nativeImage,
   net,
   screen,
@@ -477,6 +478,17 @@ function recriarJanela() {
   }
 }
 
+/** Traz a janela para frente, recriando se estiver suspensa. */
+function mostrar() {
+  if (!janela || janela.isDestroyed()) {
+    recriarJanela();
+    return;
+  }
+  if (janela.isMinimized()) janela.restore();
+  janela.show();
+  janela.focus();
+}
+
 function alternar() {
   if (!janela || janela.isDestroyed()) {
     recriarJanela();
@@ -760,12 +772,10 @@ function montarMenu() {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
-    if (!janela || janela.isDestroyed()) recriarJanela();
-    else {
-      janela.show();
-      janela.focus();
-    }
+  app.on("second-instance", mostrar);
+
+  ipcMain.on("notificacao-clicada", (e) => {
+    if (janela && !janela.isDestroyed() && e.sender === janela.webContents) mostrar();
   });
 
   // No Wayland roda nativo em vez de XWayland, igual ao modo leve do projeto.
