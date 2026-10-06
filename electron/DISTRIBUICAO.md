@@ -18,7 +18,7 @@ testada num aparelho ARM.
 Baixe o arquivo `.deb` e instale com dois cliques, ou pelo terminal:
 
 ```bash
-sudo apt install ./whatsapp-linux_1.0.4_amd64.deb
+sudo apt install ./whatsapp-linux_1.0.5_amd64.deb
 ```
 
 Depois procure "WhatsApp Linux" no menu de aplicativos.
@@ -28,8 +28,8 @@ Depois procure "WhatsApp Linux" no menu de aplicativos.
 Baixe o arquivo `.AppImage` e libere a execução:
 
 ```bash
-chmod +x WhatsAppLinux-1.0.4-x86_64.AppImage
-./WhatsAppLinux-1.0.4-x86_64.AppImage
+chmod +x WhatsAppLinux-1.0.5-x86_64.AppImage
+./WhatsAppLinux-1.0.5-x86_64.AppImage
 ```
 
 Sem terminal: clique com o botão direito no arquivo, Propriedades, Permissões,
@@ -88,7 +88,7 @@ sudo apt install libfuse2
 Ou rode sem instalar nada:
 
 ```bash
-./WhatsAppLinux-1.0.4-x86_64.AppImage --appimage-extract-and-run
+./WhatsAppLinux-1.0.5-x86_64.AppImage --appimage-extract-and-run
 ```
 
 **Erro de sandbox no Ubuntu 24.04:** use o `.deb` em vez do AppImage. Ele já vem
@@ -99,8 +99,8 @@ de lugar e cria um atalho que roda o app com `--no-sandbox`, desligando uma cama
 de proteção. Prefira o `.deb`, ou o `tar.gz`:
 
 ```bash
-tar -xzf whatsapp-linux-1.0.4-x64.tar.gz -C ~/.local/lib/
-~/.local/lib/whatsapp-linux-1.0.4-x64/whatsapp-linux
+tar -xzf whatsapp-linux-1.0.5-x64.tar.gz -C ~/.local/lib/
+~/.local/lib/whatsapp-linux-1.0.5-x64/whatsapp-linux
 ```
 
 Na primeira vez ele pergunta se quer adicionar ao menu de aplicativos, igual ao

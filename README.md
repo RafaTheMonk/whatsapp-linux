@@ -17,11 +17,11 @@ Testado em CachyOS com KDE Plasma sobre Wayland. Deve funcionar em qualquer dist
 
 ```bash
 # Debian e derivados
-sudo apt install ./whatsapp-linux_1.0.4_amd64.deb
+sudo apt install ./whatsapp-linux_1.0.5_amd64.deb
 
 # AppImage
-chmod +x WhatsAppLinux-1.0.4-x86_64.AppImage
-./WhatsAppLinux-1.0.4-x86_64.AppImage
+chmod +x WhatsAppLinux-1.0.5-x86_64.AppImage
+./WhatsAppLinux-1.0.5-x86_64.AppImage
 ```
 
 Em ARM (Raspberry Pi 4 e 5, notebooks ARM), troque `amd64` e `x86_64` por `arm64`.
@@ -301,7 +301,7 @@ atestação de procedência, que liga cada arquivo ao workflow e ao commit que o
 gerou. Com o GitHub CLI:
 
 ```bash
-gh attestation verify WhatsAppLinux-1.0.4-x86_64.AppImage --repo RafaTheMonk/whatsapp-linux
+gh attestation verify WhatsAppLinux-1.0.5-x86_64.AppImage --repo RafaTheMonk/whatsapp-linux
 ```
 
 ### Reproduzir o build
