@@ -54,6 +54,8 @@ repositório: publique em Releases ou num drive.
 
 - Fecha para a bandeja no X, em vez de encerrar. A sessão continua conectada e as
   notificações continuam chegando.
+- Clicar numa notificação traz a janela de volta, mesmo escondida na bandeja,
+  ou minimizada.
 - Contador de não lidas lido do título da página, desenhado sobre o ícone da bandeja
   (1 a 9 e "9+"), no tooltip e no badge. É o número do próprio WhatsApp, que conta
   conversas com mensagem não lida, não mensagens. Os ícones com número saem de
