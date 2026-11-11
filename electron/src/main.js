@@ -603,6 +603,12 @@ function montarJanela() {
   wc.on("page-title-updated", (e, titulo) => atualizarNaoLidas(titulo));
   janela.on("page-title-updated", (e) => e.preventDefault());
 
+  // O WhatsApp Web registra beforeunload. No Electron isso cancela em silencio o
+  // fechamento da janela e, com ele, o app.quit(): o "Sair" da bandeja e o
+  // Ctrl+Q nao faziam nada (medido em 11/11/2026). Todo unload aqui e pedido
+  // explicito de quem usa (sair, recarregar), entao o pedido da pagina e ignorado.
+  wc.on("will-prevent-unload", (e) => e.preventDefault());
+
   // Sem isto, uma queda do renderer deixa a janela branca para sempre.
   wc.on("render-process-gone", (e, detalhes) => {
     console.error("renderer caiu:", detalhes.reason);
