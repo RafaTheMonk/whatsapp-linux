@@ -78,7 +78,7 @@ acumula CVE. Quem distribui assume manter a versão em dia. Veja
 
 As duas primeiras são scripts que rodam da própria pasta do repositório. A terceira
 é um pacote pronto (`AppImage`, `.deb`, `tar.gz`) para mandar para alguém que só
-quer baixar e usar, hoje com **Electron 44.5.1 (Chromium 152)**. Detalhes de build e
+quer baixar e usar, hoje com **Electron 45.3.0 (Chromium 156)**. Detalhes de build e
 distribuição em [`electron/README.md`](electron/README.md).
 
 O modo tray existe porque o WhatsApp Web não desconecta quando você fecha a janela.

@@ -107,7 +107,7 @@ Electron 44, em 11/09/2026.
 ## Versão do Electron e atualização
 
 O projeto pina a versão exata do Electron, sem caret, para o build ser
-reproduzível. Hoje: **Electron 44.5.1, com Chromium 152**.
+reproduzível. Hoje: **Electron 45.3.0, com Chromium 156**.
 
 Isto não é detalhe de dependência, é postura de segurança. Um wrapper é um
 navegador inteiro: entregar um Electron fora de suporte é entregar um navegador
